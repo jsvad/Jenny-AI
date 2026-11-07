@@ -1,6 +1,7 @@
 package com.jennyai.app
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.content.pm.PackageManager
@@ -156,7 +157,7 @@ private fun JennyApp(activity: MainActivity) {
     val chatScrollState = rememberScrollState()
     var message by remember { mutableStateOf("") }
     val chatPreferences = remember {
-        activity.getSharedPreferences("jenny_chat", MODE_PRIVATE)
+        activity.getSharedPreferences("jenny_chat", Context.MODE_PRIVATE)
     }
     var conversation by remember {
         mutableStateOf(
