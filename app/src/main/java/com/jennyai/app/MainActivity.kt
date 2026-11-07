@@ -175,6 +175,7 @@ private fun JennyApp(activity: MainActivity) {
         )
     }
     var status by remember { mutableStateOf("آماده") }
+    var currentAnimation by remember { mutableStateOf("Idle") }
 
     val microphonePermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -253,8 +254,9 @@ private fun JennyApp(activity: MainActivity) {
                             ModelNode(
                                 modelInstance = instance,
                                 scaleToUnits = 1.75f,
-                                autoAnimate = true,
-                                animationName = "Idle"
+                                autoAnimate = false,
+                                animationName = currentAnimation,
+                                animationLoop = true
                             )
                         }
                     }
@@ -270,6 +272,39 @@ private fun JennyApp(activity: MainActivity) {
                 Spacer(modifier = Modifier.size(12.dp))
                 Text("جنی", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 Text(status, color = Color(0xFFB8BBD0), fontSize = 12.sp, textAlign = TextAlign.Center)
+
+                Spacer(modifier = Modifier.size(12.dp))
+                Text("حالت و حرکت جنی", color = Color(0xFFE9D5FF), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { currentAnimation = "Idle"; status = "جنی در حالت عادی است." },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Idle") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("عادی") }
+                    Button(
+                        onClick = { currentAnimation = "Wave"; status = "جنی برایت دست تکان می‌دهد!" },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Wave") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("سلام 👋") }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { currentAnimation = "Walk"; status = "جنی در حال راه رفتن است." },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Walk") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("راه رفتن") }
+                    Button(
+                        onClick = { currentAnimation = "Run"; status = "جنی در حال دویدن است." },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Run") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("دویدن") }
+                }
 
                 Spacer(modifier = Modifier.size(22.dp))
 
