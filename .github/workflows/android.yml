@@ -23,6 +23,28 @@ jobs:
           yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
           "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Generate Jenny launcher icons
+        run: |
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          source = Image.open("tools/jenny_icon.jpg").convert("RGB")
+          sizes = {
+              "mipmap-mdpi": 48,
+              "mipmap-hdpi": 72,
+              "mipmap-xhdpi": 96,
+              "mipmap-xxhdpi": 144,
+              "mipmap-xxxhdpi": 192,
+          }
+          for folder, size in sizes.items():
+              target = Path("app/src/main/res") / folder
+              target.mkdir(parents=True, exist_ok=True)
+              source.resize((size, size), Image.Resampling.LANCZOS).save(
+                  target / "ic_launcher.png", format="PNG", optimize=True
+              )
+          PY
+
       - name: Restore stable debug signing key
         uses: actions/cache@v4
         with:
