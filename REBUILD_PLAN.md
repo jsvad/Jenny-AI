@@ -37,3 +37,19 @@ Target: Android phone Redmi 14C (6 GB RAM), Android app id `com.jennyai.app`.
 - Conversation history survives app restart.
 - UI labels clearly distinguish demo replies, local model replies, and online AI replies.
 - A successful CI build is not described as device-verified until tested on the Redmi 14C.
+
+ 
+## 3D room and free-camera experience
+- The main scene is Jenny's personal bedroom, inspired by the user's reference image: a purple nighttime palette, soft accent lighting, dark curtains, bed, desk, wall posters, and cat-themed decorations.
+- Use a navigable 3D room rather than a flat background image.
+- Camera mode: free orbit. One-finger drag rotates the camera around a room focus point; pinch gestures zoom in/out. Keep camera bounds so users cannot flip under the floor or zoom through walls.
+- Jenny remains a visible character inside the room. Keep the room and avatar as separate scene assets so either can be replaced without rebuilding the other.
+- Make room props lightweight and use baked/static lighting where possible for stable performance on the Redmi 14C.
+- Provide a fallback room view if the 3D room or avatar fails to load; do not block chat or speech features.
+- Initial milestone: a room shell with floor, walls, bed, desk, curtains, posters, and lighting; then add interactive props and avatar animation in later milestones.
+
+### Room acceptance checks
+- The user can rotate the view smoothly with one finger and zoom with a two-finger pinch.
+- Camera movement is bounded and does not pass through room geometry.
+- The room remains responsive on the Redmi 14C; reduce texture sizes, shadows, and polygon counts if needed.
+- Jenny can be positioned independently in the room and remains correctly framed from different camera angles.
