@@ -179,7 +179,6 @@ private fun JennyApp(activity: MainActivity) {
         } else {
             "صدای فارسی در موتور گفتار گوشی موجود نیست؛ می‌توانی آن را در تنظیمات تبدیل متن به گفتار نصب کنی."
         }
-        activity.speakPersian(reply)
     }
 
     MaterialTheme {
