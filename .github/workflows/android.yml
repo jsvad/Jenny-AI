@@ -23,6 +23,12 @@ jobs:
           yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
           "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Restore stable debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: jenny-debug-keystore-v1
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -30,6 +36,29 @@ jobs:
 
       - name: Build debug APK
         run: gradle assembleDebug
+
+      - name: Verify APK and report install metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          APKSIGNER="${ANDROID_HOME}/build-tools/35.0.0/apksigner"
+          AAPT="${ANDROID_HOME}/build-tools/35.0.0/aapt"
+
+          "$APKSIGNER" verify --verbose --print-certs "$APK_PATH"
+          BADGING="$("$AAPT" dump badging "$APK_PATH")"
+          echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:|native-code:)" || true
+
+          APK_SIZE="$(stat -c%s "$APK_PATH")"
+          APK_SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
+          {
+            echo "## Jenny AI APK verification"
+            echo "- APK signature: verified"
+            echo "- APK size: ${APK_SIZE} bytes"
+            echo "- SHA-256: ${APK_SHA256}"
+            echo "Android package metadata:"
+            echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:|native-code:)" || true
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
