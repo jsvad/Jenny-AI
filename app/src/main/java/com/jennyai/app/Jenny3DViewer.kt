@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import io.github.sceneview.Scene
+import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.SurfaceType
 import io.github.sceneview.math.Position
 
