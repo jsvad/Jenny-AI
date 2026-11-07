@@ -2,7 +2,7 @@
 
 Jenny-AI is an Android-first Persian-language assistant prototype.
 
-## Current build: 0.3.0
+## Current build: 0.3.1
 
 - Kotlin and Jetpack Compose Android app
 - Persian right-to-left interface
@@ -10,7 +10,7 @@ Jenny-AI is an Android-first Persian-language assistant prototype.
 - Android speech recognition configured for Persian (fa-IR), where the device speech service supports it
 - Android text-to-speech configured for Persian (fa-IR), where a Persian voice is installed
 - Basic offline demo replies for a few common phrases
-- Conversation transcript remains visible during the current app session
+- Conversation transcript is saved locally and restored when the app is reopened
 - Stop-speaking control
 - GitHub Actions builds a debug APK, verifies its APK signature and package metadata, and uploads it as `Jenny-AI-debug`
 - CI caches the debug signing key so consecutive test APKs can normally be installed as updates without a signature mismatch
