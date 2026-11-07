@@ -1,15 +1,20 @@
-name: Build Jenny AI APK
+name: Jenny AI Android installer
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "feature/3d-jenny-model" ]
+    branches:
+      - feature/3d-jenny-model
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout source
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Java 17
@@ -18,7 +23,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK
         run: |
           yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
           "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
@@ -28,36 +33,64 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Build debug APK
-        run: gradle assembleDebug
+      - name: Build one universal debug APK
+        run: gradle --no-daemon clean assembleDebug
 
-      - name: Verify APK and report install metadata
+      - name: Verify installer and prepare direct-download files
         shell: bash
         run: |
           set -euo pipefail
-          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          SOURCE_APK="app/build/outputs/apk/debug/app-debug.apk"
+          APK="JennyAI-0.3.4.apk"
           APKSIGNER="${ANDROID_HOME}/build-tools/35.0.0/apksigner"
           AAPT="${ANDROID_HOME}/build-tools/35.0.0/aapt"
 
-          test -s "$APK_PATH"
-          "$APKSIGNER" verify --verbose --print-certs "$APK_PATH"
-          BADGING="$("$AAPT" dump badging "$APK_PATH")"
-          echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:|native-code:)" || true
+          test -s "$SOURCE_APK"
+          cp "$SOURCE_APK" "$APK"
+          test "$(dd if="$APK" bs=1 count=2 2>/dev/null)" = "PK"
+          unzip -t "$APK"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          BADGING="$("$AAPT" dump badging "$APK")"
+          echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:|native-code:)"
+          echo "$BADGING" | grep -q "package: name='com.jennyai.app'"
 
-          APK_SIZE="$(stat -c%s "$APK_PATH")"
-          APK_SHA256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
+          sha256sum "$APK" > "$APK.sha256"
           {
-            echo "## Jenny AI APK verification"
-            echo "- APK signature: verified"
-            echo "- APK size: ${APK_SIZE} bytes"
-            echo "- SHA-256: ${APK_SHA256}"
-            echo "Android package metadata:"
-            echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:|native-code:)" || true
+            echo "## Jenny AI 0.3.4 installer verification"
+            echo "- APK file exists and is non-empty"
+            echo "- ZIP/APK integrity: passed"
+            echo "- Android APK signature: verified"
+            echo "- Package: com.jennyai.app"
+            echo "- SHA-256: $(cut -d' ' -f1 "$APK.sha256")"
+            echo
+            echo "### Android package metadata"
+            echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:|native-code:)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload APK artifact
+      - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Jenny-AI-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: JennyAI-0.3.4-installer
+          path: |
+            JennyAI-0.3.4.apk
+            JennyAI-0.3.4.apk.sha256
           if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+      - name: Publish direct APK download
+        if: github.ref == 'refs/heads/feature/3d-jenny-model'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.3.4
+          name: Jenny AI 0.3.4
+          body: |
+            Direct Android APK installer for Jenny AI 0.3.4.
+
+            Download JennyAI-0.3.4.apk directly. Do not extract or rename it.
+            SHA-256 checksum is provided alongside the APK.
+          files: |
+            JennyAI-0.3.4.apk
+            JennyAI-0.3.4.apk.sha256
+          overwrite_files: true
+          make_latest: false
