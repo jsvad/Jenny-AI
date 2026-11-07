@@ -60,6 +60,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import java.util.Locale
+import io.github.sceneview.SceneView
+import io.github.sceneview.ModelNode
+import io.github.sceneview.rememberCameraManipulator
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberModelInstance
+import io.github.sceneview.rememberModelLoader
 
 class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
@@ -168,9 +174,6 @@ private fun JennyApp(activity: MainActivity) {
         )
     }
     var status by remember { mutableStateOf("آماده") }
-    val avatarBitmap = remember {
-        activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
-    }
 
     val microphonePermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -223,22 +226,43 @@ private fun JennyApp(activity: MainActivity) {
 
                 Spacer(modifier = Modifier.size(24.dp))
 
+                val engine = rememberEngine()
+                val modelLoader = rememberModelLoader(engine)
+                val modelInstance = rememberModelInstance(modelLoader, "models/rigged-model.glb")
+
                 Box(
-                    modifier = Modifier.size(142.dp).background(
-                        Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFFEC4899))),
-                        CircleShape
-                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(340.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF30204F), Color(0xFF171326), Color(0xFF10121B))
+                            )
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (avatarBitmap != null) {
-                        Image(
-                            bitmap = avatarBitmap,
-                            contentDescription = "آواتار جنی",
-                            modifier = Modifier.fillMaxSize().padding(4.dp).clip(CircleShape),
-                            contentScale = ContentScale.Crop
+                    SceneView(
+                        modifier = Modifier.fillMaxSize(),
+                        engine = engine,
+                        modelLoader = modelLoader,
+                        cameraManipulator = rememberCameraManipulator()
+                    ) {
+                        modelInstance?.let { instance ->
+                            ModelNode(
+                                modelInstance = instance,
+                                scaleToUnits = 1.75f,
+                                autoAnimate = true,
+                                animationName = "Idle"
+                            )
+                        }
+                    }
+                    if (modelInstance == null) {
+                        Text(
+                            "در حال بارگذاری جنی سه‌بعدی...",
+                            color = Color(0xFFE9D5FF),
+                            textAlign = TextAlign.Center
                         )
-                    } else {
-                        Text("J", color = Color.White, fontSize = 72.sp, fontWeight = FontWeight.Light)
                     }
                 }
 
