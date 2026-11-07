@@ -23,27 +23,6 @@ jobs:
           yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
           "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Restore stable debug signing key
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: jenny-debug-keystore-v1
-
-      - name: Ensure stable debug signing key
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$HOME/.android"
-          if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -v \
-              -keystore "$HOME/.android/debug.keystore" \
-              -storepass android \
-              -alias androiddebugkey \
-              -keypass android \
-              -dname "CN=Android Debug,O=Android,C=US" \
-              -keyalg RSA -keysize 2048 -validity 10000
-          fi
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -51,25 +30,6 @@ jobs:
 
       - name: Build debug APK
         run: gradle assembleDebug
-
-      - name: Re-sign APK with broad Android signature compatibility
-        shell: bash
-        run: |
-          set -euo pipefail
-          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-          SIGNED_PATH="app/build/outputs/apk/debug/app-debug-signed.apk"
-          APKSIGNER="${ANDROID_HOME}/build-tools/35.0.0/apksigner"
-
-          "$APKSIGNER" sign \
-            --ks "$HOME/.android/debug.keystore" \
-            --ks-key-alias androiddebugkey \
-            --ks-pass pass:android \
-            --key-pass pass:android \
-            --v1-signing-enabled true \
-            --v2-signing-enabled true \
-            --v3-signing-enabled true \
-            --out "$SIGNED_PATH" "$APK_PATH"
-          mv "$SIGNED_PATH" "$APK_PATH"
 
       - name: Verify APK and report install metadata
         shell: bash
@@ -79,6 +39,7 @@ jobs:
           APKSIGNER="${ANDROID_HOME}/build-tools/35.0.0/apksigner"
           AAPT="${ANDROID_HOME}/build-tools/35.0.0/aapt"
 
+          test -s "$APK_PATH"
           "$APKSIGNER" verify --verbose --print-certs "$APK_PATH"
           BADGING="$("$AAPT" dump badging "$APK_PATH")"
           echo "$BADGING" | grep -E "^(package:|sdkVersion:|targetSdkVersion:|native-code:)" || true
