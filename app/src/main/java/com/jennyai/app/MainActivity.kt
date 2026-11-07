@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
@@ -88,6 +89,8 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
     fun isPersianVoiceReady(): Boolean = ttsReady
 
+    fun stopPersianSpeaking() { tts?.stop() }
+
     fun startPersianListening(onResult: (String) -> Unit, onError: (String) -> Unit) {
         val recognizer = speechRecognizer
         if (recognizer == null) {
@@ -99,7 +102,6 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fa-IR")
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "fa-IR")
-            putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true)
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "با جنی فارسی صحبت کن")
@@ -180,7 +182,11 @@ private fun JennyApp(activity: MainActivity) {
         val userMessage = message.trim()
         if (userMessage.isBlank()) return
         val reply = offlineDemoReply(userMessage)
-        conversation = "تو: $userMessage\n\nجنی: $reply"
+        conversation = if (conversation.isBlank()) {
+            "تو: $userMessage\n\nجنی: $reply"
+        } else {
+            "$conversation\n\n────────────\n\nتو: $userMessage\n\nجنی: $reply"
+        }
         message = ""
         status = if (activity.speakPersian(reply)) {
             "پاسخ آزمایشی با صدای فارسی پخش می‌شود."
@@ -195,11 +201,13 @@ private fun JennyApp(activity: MainActivity) {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Brush.verticalGradient(listOf(Color(0xFF191D30), Color(0xFF10121B))))
-                    .padding(20.dp),
+                    .padding(20.dp)
+                    .verticalScroll(remember { androidx.compose.foundation.rememberScrollState() }),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Jenny AI", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                Text("دستیار فارسی • نسخه ۰٫۲", color = Color(0xFFB8BBD0), fontSize = 14.sp)
+                Text("دستیار فارسی • نسخه ۰٫۳", color = Color(0xFFB8BBD0), fontSize = 14.sp)
+                Text("گفت‌وگوی محلی و گفتار فارسی", color = Color(0xFF858BA2), fontSize = 11.sp)
 
                 Spacer(modifier = Modifier.size(24.dp))
 
@@ -243,7 +251,7 @@ private fun JennyApp(activity: MainActivity) {
                     )
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.size(18.dp))
 
                 OutlinedTextField(
                     value = message,
@@ -295,9 +303,19 @@ private fun JennyApp(activity: MainActivity) {
                     }
                 }
 
-                Spacer(modifier = Modifier.size(10.dp))
+                Spacer(modifier = Modifier.size(8.dp))
+                Button(
+                    onClick = {
+                        activity.stopPersianSpeaking()
+                        status = "پخش صدا متوقف شد."
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50))
+                ) {
+                    Text("توقف صدای جنی")
+                }
+                Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    "گفتار فارسی آزمایشی • پاسخ‌ها فعلاً آفلاین و ساده هستند",
+                    "نسخه ۰٫۳ • پاسخ‌گویی فعلاً آفلاین و آزمایشی است",
                     color = Color(0xFF858BA2),
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center
