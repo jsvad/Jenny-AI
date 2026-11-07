@@ -155,8 +155,16 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 private fun JennyApp(activity: MainActivity) {
     val chatScrollState = rememberScrollState()
     var message by remember { mutableStateOf("") }
+    val chatPreferences = remember {
+        activity.getSharedPreferences("jenny_chat", MODE_PRIVATE)
+    }
     var conversation by remember {
-        mutableStateOf("سلام! من جنی هستم. می‌توانی پیام بنویسی یا با دکمه میکروفون فارسی صحبت کنی.")
+        mutableStateOf(
+            chatPreferences.getString(
+                "conversation",
+                "سلام! من جنی هستم. می‌توانی پیام بنویسی یا با دکمه میکروفون فارسی صحبت کنی."
+            ) ?: "سلام! من جنی هستم. می‌توانی پیام بنویسی یا با دکمه میکروفون فارسی صحبت کنی."
+        )
     }
     var status by remember { mutableStateOf("آماده") }
     val avatarBitmap = remember {
@@ -189,6 +197,7 @@ private fun JennyApp(activity: MainActivity) {
         } else {
             "$conversation\n\n────────────\n\nتو: $userMessage\n\nجنی: $reply"
         }
+        chatPreferences.edit().putString("conversation", conversation).apply()
         message = ""
         status = if (activity.speakPersian(reply)) {
             "پاسخ آزمایشی با صدای فارسی پخش می‌شود."
