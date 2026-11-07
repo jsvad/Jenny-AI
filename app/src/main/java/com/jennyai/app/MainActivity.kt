@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -223,24 +224,11 @@ private fun JennyApp(activity: MainActivity) {
 
                 Spacer(modifier = Modifier.size(24.dp))
 
-                Box(
-                    modifier = Modifier.size(142.dp).background(
-                        Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFFEC4899))),
-                        CircleShape
-                    ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (avatarBitmap != null) {
-                        Image(
-                            bitmap = avatarBitmap,
-                            contentDescription = "آواتار جنی",
-                            modifier = Modifier.fillMaxSize().padding(4.dp).clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Text("J", color = Color.White, fontSize = 72.sp, fontWeight = FontWeight.Light)
-                    }
-                }
+                Jenny3DViewer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                )
 
                 Spacer(modifier = Modifier.size(12.dp))
                 Text("جنی", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
