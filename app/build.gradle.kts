@@ -12,8 +12,8 @@ android {
         applicationId = "com.jennyai.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.3.5"
+        versionCode = 9
+        versionName = "0.3.6"
     }
 
     buildFeatures {
@@ -38,6 +38,6 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.core:core-ktx:1.15.0")
-    implementation("io.github.sceneview:sceneview:3.5.0")
+    implementation("io.github.sceneview:sceneview:3.5.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
