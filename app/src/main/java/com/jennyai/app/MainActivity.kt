@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -60,6 +61,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import java.util.Locale
+import io.github.sceneview.SceneView
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberCameraManipulator
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberModelInstance
+import io.github.sceneview.rememberModelLoader
 
 class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
@@ -168,9 +175,7 @@ private fun JennyApp(activity: MainActivity) {
         )
     }
     var status by remember { mutableStateOf("آماده") }
-    val avatarBitmap = remember {
-        activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
-    }
+    var currentAnimation by remember { mutableStateOf("Idle") }
 
     val microphonePermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -223,28 +228,83 @@ private fun JennyApp(activity: MainActivity) {
 
                 Spacer(modifier = Modifier.size(24.dp))
 
+                val engine = rememberEngine()
+                val modelLoader = rememberModelLoader(engine)
+                val modelInstance = rememberModelInstance(modelLoader, "models/rigged-model.glb")
+
                 Box(
-                    modifier = Modifier.size(142.dp).background(
-                        Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFFEC4899))),
-                        CircleShape
-                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(340.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF30204F), Color(0xFF171326), Color(0xFF10121B))
+                            )
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (avatarBitmap != null) {
-                        Image(
-                            bitmap = avatarBitmap,
-                            contentDescription = "آواتار جنی",
-                            modifier = Modifier.fillMaxSize().padding(4.dp).clip(CircleShape),
-                            contentScale = ContentScale.Crop
+                    SceneView(
+                        modifier = Modifier.fillMaxSize(),
+                        engine = engine,
+                        modelLoader = modelLoader,
+                        cameraManipulator = rememberCameraManipulator()
+                    ) {
+                        modelInstance?.let { instance ->
+                            ModelNode(
+                                modelInstance = instance,
+                                scaleToUnits = 1.75f,
+                                autoAnimate = false,
+                                animationName = currentAnimation,
+                                animationLoop = true
+                            )
+                        }
+                    }
+                    if (modelInstance == null) {
+                        Text(
+                            "در حال بارگذاری جنی سه‌بعدی...",
+                            color = Color(0xFFE9D5FF),
+                            textAlign = TextAlign.Center
                         )
-                    } else {
-                        Text("J", color = Color.White, fontSize = 72.sp, fontWeight = FontWeight.Light)
                     }
                 }
 
                 Spacer(modifier = Modifier.size(12.dp))
                 Text("جنی", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 Text(status, color = Color(0xFFB8BBD0), fontSize = 12.sp, textAlign = TextAlign.Center)
+
+                Spacer(modifier = Modifier.size(12.dp))
+                Text("حالت و حرکت جنی", color = Color(0xFFE9D5FF), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { currentAnimation = "Idle"; status = "جنی در حالت عادی است." },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Idle") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("عادی") }
+                    Button(
+                        onClick = { currentAnimation = "Wave"; status = "جنی برایت دست تکان می‌دهد!" },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Wave") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("سلام 👋") }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { currentAnimation = "Walk"; status = "جنی در حال راه رفتن است." },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Walk") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("راه رفتن") }
+                    Button(
+                        onClick = { currentAnimation = "Run"; status = "جنی در حال دویدن است." },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (currentAnimation == "Run") Color(0xFF7657E8) else Color(0xFF343A50))
+                    ) { Text("دویدن") }
+                }
 
                 Spacer(modifier = Modifier.size(22.dp))
 
