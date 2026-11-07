@@ -105,7 +105,9 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fa-IR")
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "fa-IR")
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            // Prefer the installed speech service's normal mode; Persian offline
+            // recognition is not available on every Android device.
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "با جنی فارسی صحبت کن")
         }
@@ -122,12 +124,18 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
             override fun onError(error: Int) {
                 val message = when (error) {
                     SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT ->
-                        "صدایی تشخیص داده نشد؛ دوباره امتحان کن."
+                        "صدایی تشخیص داده نشد؛ نزدیک میکروفون صحبت کن و دوباره تلاش کن."
                     SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
-                        "مجوز میکروفون داده نشده است."
+                        "مجوز میکروفون داده نشده است؛ دسترسی میکروفون را بررسی کن."
                     SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
-                        "اتصال اینترنت یا سرویس تشخیص گفتار را بررسی کن."
-                    else -> "تشخیص صدا انجام نشد. دوباره تلاش کن."
+                        "اتصال اینترنت یا سرویس تشخیص گفتار Google را بررسی کن."
+                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY ->
+                        "سرویس تشخیص گفتار مشغول است؛ چند لحظه صبر کن و دوباره بزن."
+                    SpeechRecognizer.ERROR_SERVER, SpeechRecognizer.ERROR_SERVER_DISCONNECTED ->
+                        "سرویس تشخیص گفتار پاسخ نمی‌دهد؛ سرویس Google را بررسی کن."
+                    SpeechRecognizer.ERROR_TOO_MANY_REQUESTS ->
+                        "درخواست‌های زیادی فرستاده شده؛ کمی صبر کن و دوباره تلاش کن."
+                    else -> "تشخیص صدا انجام نشد (کد خطا: $error). اتصال اینترنت و سرویس گفتار را بررسی کن."
                 }
                 onError(message)
             }
@@ -140,7 +148,11 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
             }
         })
 
-        recognizer.startListening(intent)
+        try {
+            recognizer.startListening(intent)
+        } catch (exception: Exception) {
+            onError("شروع تشخیص گفتار ممکن نشد: ${exception.localizedMessage ?: "خطای نامشخص"}")
+        }
     }
 
     override fun onDestroy() {
@@ -260,6 +272,7 @@ private fun JennyApp(activity: MainActivity) {
                     placeholder = { Text("پیامت را بنویس یا صحبت کن...", color = Color(0xFF9DA3B8)) },
                     singleLine = false,
                     maxLines = 3,
+                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
                     shape = RoundedCornerShape(16.dp)
                 )
 
