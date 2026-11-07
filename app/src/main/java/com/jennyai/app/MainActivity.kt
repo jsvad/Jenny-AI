@@ -230,12 +230,13 @@ private fun JennyApp(activity: MainActivity) {
 
                 val engine = rememberEngine()
                 val modelLoader = rememberModelLoader(engine)
+                val roomInstance = rememberModelInstance(modelLoader, "models/Jenny_Purple_Bedroom_v1.glb")
                 val modelInstance = rememberModelInstance(modelLoader, "models/rigged-model.glb")
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(340.dp)
+                        .height(460.dp)
                         .clip(RoundedCornerShape(24.dp))
                         .background(
                             Brush.verticalGradient(
@@ -250,6 +251,13 @@ private fun JennyApp(activity: MainActivity) {
                         modelLoader = modelLoader,
                         cameraManipulator = rememberCameraManipulator()
                     ) {
+                        roomInstance?.let { room ->
+                            ModelNode(
+                                modelInstance = room,
+                                scaleToUnits = 6.0f,
+                                autoAnimate = false
+                            )
+                        }
                         modelInstance?.let { instance ->
                             ModelNode(
                                 modelInstance = instance,
@@ -262,7 +270,7 @@ private fun JennyApp(activity: MainActivity) {
                     }
                     if (modelInstance == null) {
                         Text(
-                            "در حال بارگذاری جنی سه‌بعدی...",
+                            "در حال بارگذاری اتاق و جنی سه‌بعدی...",
                             color = Color(0xFFE9D5FF),
                             textAlign = TextAlign.Center
                         )
