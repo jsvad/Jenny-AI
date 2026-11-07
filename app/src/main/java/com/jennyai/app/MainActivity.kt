@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
@@ -152,6 +153,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
 @Composable
 private fun JennyApp(activity: MainActivity) {
+    val chatScrollState = rememberScrollState()
     var message by remember { mutableStateOf("") }
     var conversation by remember {
         mutableStateOf("سلام! من جنی هستم. می‌توانی پیام بنویسی یا با دکمه میکروفون فارسی صحبت کنی.")
@@ -202,7 +204,7 @@ private fun JennyApp(activity: MainActivity) {
                     .fillMaxSize()
                     .background(Brush.verticalGradient(listOf(Color(0xFF191D30), Color(0xFF10121B))))
                     .padding(20.dp)
-                    .verticalScroll(remember { androidx.compose.foundation.rememberScrollState() }),
+                    .verticalScroll(chatScrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Jenny AI", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
