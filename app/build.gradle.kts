@@ -12,21 +12,8 @@ android {
         applicationId = "com.jennyai.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.3.3"
-    }
-
-    signingConfigs {
-        getByName("debug") {
-            enableV1Signing = true
-            enableV2Signing = true
-        }
-    }
-
-    buildTypes {
-        getByName("debug") {
-            signingConfig = signingConfigs.getByName("debug")
-        }
+        versionCode = 7
+        versionName = "0.3.4"
     }
 
     buildFeatures {
