@@ -12,7 +12,8 @@ Jenny-AI is an Android-first Persian-language assistant prototype.
 - Basic offline demo replies for a few common phrases
 - Conversation transcript remains visible during the current app session
 - Stop-speaking control
-- GitHub Actions builds a debug APK and uploads it as `Jenny-AI-debug`
+- GitHub Actions builds a debug APK, verifies its APK signature and package metadata, and uploads it as `Jenny-AI-debug`
+- CI caches the debug signing key so consecutive test APKs can normally be installed as updates without a signature mismatch
 
 ## Important limitations
 
@@ -28,6 +29,12 @@ A secure online AI service needs a private backend and a secret API credential. 
 - Java: 17
 - Target test device: Redmi 14C, 6 GB RAM
 
+## Installing test builds
+
+The debug APK is signed with the CI debug key. The workflow now caches that key so later test builds normally keep the same signing identity. If an older test APK was signed before this cache was introduced, Android may reject an update because its signature differs. In that one-time case, uninstall the older Jenny AI test build before installing the new one. Uninstalling removes that app's local data.
+
+A successful CI build and signature check do not replace a real installation test on the Redmi 14C. If a clean install still fails, the exact Android installer error is needed to identify the device-specific cause.
+
 ## Build an APK
 
-Open the Actions tab, choose **Build Jenny AI APK**, and select **Run workflow** on `main`. After a successful run, download the `Jenny-AI-debug` artifact and extract `app-debug.apk`.
+Open the Actions tab, choose **Build Jenny AI APK**, and select **Run workflow** on `main`. After a successful run, download the `Jenny-AI-debug` artifact and extract `app-debug.apk`
