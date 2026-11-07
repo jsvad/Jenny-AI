@@ -2,6 +2,7 @@ package com.jennyai.app
 
 import android.Manifest
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.speech.RecognitionListener
@@ -12,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,6 +48,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -150,6 +155,9 @@ private fun JennyApp(activity: MainActivity) {
         mutableStateOf("سلام! من جنی هستم. می‌توانی پیام بنویسی یا با دکمه میکروفون فارسی صحبت کنی.")
     }
     var status by remember { mutableStateOf("آماده") }
+    val avatarBitmap = remember {
+        activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
+    }
 
     val microphonePermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -202,7 +210,16 @@ private fun JennyApp(activity: MainActivity) {
                     ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("J", color = Color.White, fontSize = 72.sp, fontWeight = FontWeight.Light)
+                    if (avatarBitmap != null) {
+                        Image(
+                            bitmap = avatarBitmap,
+                            contentDescription = "آواتار جنی",
+                            modifier = Modifier.fillMaxSize().padding(4.dp).clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text("J", color = Color.White, fontSize = 72.sp, fontWeight = FontWeight.Light)
+                    }
                 }
 
                 Spacer(modifier = Modifier.size(12.dp))
