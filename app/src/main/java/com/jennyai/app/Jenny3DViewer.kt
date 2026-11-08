@@ -38,7 +38,7 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             surfaceType = SurfaceType.TextureSurface
         ) {
-            val instance = rememberModelInstance(modelLoader, "models/jenny.glb")
+            val instance = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
             SideEffect {
                 modelReady = instance != null
             }
