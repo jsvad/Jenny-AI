@@ -2,5 +2,5 @@ name = "jenny-ai-private-api"
 main = "worker.js"
 compatibility_date = "2026-11-08"
 
-[vars]
-OPENAI_MODEL = "gpt-6-astra"
+[ai]
+binding = "AI"
