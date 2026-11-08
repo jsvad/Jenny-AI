@@ -18,15 +18,15 @@ import androidx.compose.ui.unit.sp
 import io.github.sceneview.Scene
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.SurfaceType
-import io.github.sceneview.math.Position
 
 /**
- * Jenny's 3D room and avatar viewer.
- * Both GLB assets are loaded from app/src/main/assets/models.
+ * Lightweight Jenny avatar viewer.
+ * Load the character directly so a separate room/environment asset cannot
+ * obscure the avatar or leave the screen showing only environment props.
  */
 @Composable
 fun Jenny3DViewer(modifier: Modifier = Modifier) {
-    var modelsReady by remember { mutableStateOf(false) }
+    var modelReady by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.background(Color(0xFF171827)),
@@ -36,38 +36,28 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             surfaceType = SurfaceType.TextureSurface
         ) {
-            val room = rememberModelInstance(modelLoader, "models/Jenny_room_environment.glb")
-            val jenny = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
+            // jenny.glb is the complete rigged character asset bundled with the app.
+            val jenny = rememberModelInstance(modelLoader, "models/jenny.glb")
 
             SideEffect {
-                modelsReady = room != null && jenny != null
+                modelReady = jenny != null
             }
 
-            room?.let {
+            jenny?.let { instance ->
                 ModelNode(
-                    modelInstance = it,
-                    autoAnimate = false,
-                    scaleToUnits = 5.2f,
-                    centerOrigin = Position(x = 0f, y = -1.5f, z = 0f)
-                )
-            }
-
-            jenny?.let {
-                ModelNode(
-                    modelInstance = it,
+                    modelInstance = instance,
                     autoAnimate = false,
                     animationName = "Idle",
                     animationLoop = true,
                     animationSpeed = 1f,
-                    scaleToUnits = 2.0f,
-                    centerOrigin = Position(x = 0f, y = -1f, z = 0f)
+                    scaleToUnits = 2.0f
                 )
             }
         }
 
-        if (!modelsReady) {
+        if (!modelReady) {
             Text(
-                text = "در حال بارگذاری اتاق و مدل سه‌بعدی جنی…",
+                text = "در حال بارگذاری مدل سه‌بعدی جنی…",
                 color = Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium

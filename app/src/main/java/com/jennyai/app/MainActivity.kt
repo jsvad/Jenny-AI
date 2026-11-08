@@ -268,9 +268,20 @@ private fun JennyApp(activity: MainActivity) {
                     }
                 }
             } catch (error: Exception) {
+                // Keep chat usable when the network or AI service is unavailable.
+                val offlineReply = offlineDemoReply(userMessage)
                 activity.runOnUiThread {
-                    message = userMessage
-                    status = "اتصال به هوش مصنوعی ناموفق بود: ${error.message ?: "خطای شبکه"}"
+                    conversation = if (conversation.isBlank()) {
+                        "تو: $userMessage\\n\\nجنی (آفلاین): $offlineReply"
+                    } else {
+                        "$conversation\\n\\n────────────\\n\\nتو: $userMessage\\n\\nجنی (آفلاین): $offlineReply"
+                    }
+                    chatPreferences.edit().putString("conversation", conversation).apply()
+                    status = if (activity.speakPersian(offlineReply)) {
+                        "اتصال برقرار نشد؛ جنی با پاسخ ساده آفلاین جواب داد."
+                    } else {
+                        "اتصال برقرار نشد؛ پاسخ ساده آفلاین نمایش داده شد."
+                    }
                 }
             } finally {
                 connection?.disconnect()
@@ -289,8 +300,8 @@ private fun JennyApp(activity: MainActivity) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Jenny AI", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                Text("دستیار فارسی • نسخه ۰٫۳", color = Color(0xFFB8BBD0), fontSize = 14.sp)
-                Text("گفت‌وگوی محلی و گفتار فارسی", color = Color(0xFF858BA2), fontSize = 11.sp)
+                Text("دستیار فارسی • نسخه ۰٫۳٫۷", color = Color(0xFFB8BBD0), fontSize = 14.sp)
+                Text("گفت‌وگوی هوشمند و گفتار فارسی", color = Color(0xFF858BA2), fontSize = 11.sp)
 
                 Spacer(modifier = Modifier.size(24.dp))
 
@@ -402,7 +413,7 @@ private fun JennyApp(activity: MainActivity) {
                 }
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    "نسخه ۰٫۳ • پاسخ‌گویی فعلاً آفلاین و آزمایشی است",
+                    "نسخه ۰٫۳٫۷ • گفت‌وگوی آنلاین با پاسخ جایگزین آفلاین محدود",
                     color = Color(0xFF858BA2),
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center
