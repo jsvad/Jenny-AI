@@ -239,7 +239,7 @@ private fun JennyApp(activity: MainActivity) {
                 Jenny3DViewer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(300.dp)
+                        .height(480.dp)
                 )
 
                 Spacer(modifier = Modifier.size(12.dp))

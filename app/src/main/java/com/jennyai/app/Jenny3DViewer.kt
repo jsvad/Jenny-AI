@@ -59,7 +59,7 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
                     animationName = "Idle",
                     animationLoop = true,
                     animationSpeed = 1f,
-                    scaleToUnits = 1.7f,
+                    scaleToUnits = 2.0f,
                     centerOrigin = Position(x = 0f, y = -1f, z = 0f)
                 )
             }
