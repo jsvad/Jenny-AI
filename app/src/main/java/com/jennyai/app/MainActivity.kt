@@ -61,6 +61,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import java.util.Locale
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
 
 class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
@@ -226,19 +229,53 @@ private fun JennyApp(activity: MainActivity) {
     fun sendMessage() {
         val userMessage = message.trim()
         if (userMessage.isBlank()) return
-        val reply = offlineDemoReply(userMessage)
-        conversation = if (conversation.isBlank()) {
-            "تو: $userMessage\n\nجنی: $reply"
-        } else {
-            "$conversation\n\n────────────\n\nتو: $userMessage\n\nجنی: $reply"
-        }
-        chatPreferences.edit().putString("conversation", conversation).apply()
+        val previousConversation = conversation.takeLast(5000)
         message = ""
-        status = if (activity.speakPersian(reply)) {
-            "پاسخ آزمایشی با صدای فارسی پخش می‌شود."
-        } else {
-            "صدای فارسی در موتور گفتار گوشی موجود نیست؛ می‌توانی آن را در تنظیمات تبدیل متن به گفتار نصب کنی."
-        }
+        status = "در حال دریافت پاسخ از هوش مصنوعی جنی..."
+        Thread {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = (URL("https://jenny-ai.javademad83.workers.dev").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 20000
+                    readTimeout = 45000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                }
+                val payload = JSONObject().put("message", userMessage)
+                    .put("conversation", previousConversation).toString()
+                connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val responseText = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+                val json = JSONObject(responseText.ifBlank { "{}" })
+                if (code !in 200..299) {
+                    throw IllegalStateException(json.optString("error", "خطای سرور ($code)"))
+                }
+                val reply = json.optString("reply").trim()
+                if (reply.isBlank()) throw IllegalStateException("پاسخ خالی از سرور دریافت شد.")
+                activity.runOnUiThread {
+                    conversation = if (conversation.isBlank()) {
+                        "تو: $userMessage\\n\\nجنی: $reply"
+                    } else {
+                        "$conversation\\n\\n────────────\\n\\nتو: $userMessage\\n\\nجنی: $reply"
+                    }
+                    chatPreferences.edit().putString("conversation", conversation).apply()
+                    status = if (activity.speakPersian(reply)) {
+                        "جنی پاسخ داد و صدا در حال پخش است."
+                    } else {
+                        "پاسخ جنی دریافت شد؛ برای شنیدن آن صدای فارسی گوشی را نصب کن."
+                    }
+                }
+            } catch (error: Exception) {
+                activity.runOnUiThread {
+                    message = userMessage
+                    status = "اتصال به هوش مصنوعی ناموفق بود: ${error.message ?: "خطای شبکه"}"
+                }
+            } finally {
+                connection?.disconnect()
+            }
+        }.start()
     }
 
     MaterialTheme {
