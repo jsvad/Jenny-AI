@@ -79,8 +79,13 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts?.setLanguage(Locale("fa", "IR"))
-            ttsReady = result != TextToSpeech.LANG_MISSING_DATA &&
+            ttsReady = result != null &&
+                result != TextToSpeech.LANG_MISSING_DATA &&
                 result != TextToSpeech.LANG_NOT_SUPPORTED
+            if (ttsReady) {
+                tts?.setSpeechRate(0.92f)
+                tts?.setPitch(1.0f)
+            }
         }
     }
 
@@ -91,6 +96,22 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     }
 
     fun isPersianVoiceReady(): Boolean = ttsReady
+
+    fun installPersianVoice() {
+        try {
+            startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA))
+        } catch (_: Exception) {
+            statusMessageForVoiceInstall()
+        }
+    }
+
+    private fun statusMessageForVoiceInstall() {
+        try {
+            startActivity(Intent("com.android.settings.TTS_SETTINGS"))
+        } catch (_: Exception) {
+            startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+        }
+    }
 
     fun stopPersianSpeaking() { tts?.stop() }
 
@@ -245,6 +266,22 @@ private fun JennyApp(activity: MainActivity) {
                 Spacer(modifier = Modifier.size(12.dp))
                 Text("جنی", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 Text(status, color = Color(0xFFB8BBD0), fontSize = 12.sp, textAlign = TextAlign.Center)
+
+                if (!activity.isPersianVoiceReady()) {
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Button(
+                        onClick = { activity.installPersianVoice() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF76518E))
+                    ) {
+                        Text("نصب صدای فارسی جنی")
+                    }
+                    Text(
+                        "برای شنیدن پاسخ‌های جنی، صدای فارسی را در موتور گفتار گوشی نصب کن؛ سپس برنامه را دوباره باز کن.",
+                        color = Color(0xFFB8BBD0),
+                        fontSize = 11.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 Spacer(modifier = Modifier.size(22.dp))
 
