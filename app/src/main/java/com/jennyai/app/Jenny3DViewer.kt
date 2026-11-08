@@ -21,14 +21,12 @@ import io.github.sceneview.SurfaceType
 import io.github.sceneview.math.Position
 
 /**
- * Jenny's interactive GLB viewer.
- *
- * The model is expected at app/src/main/assets/models/jenny.glb.
- * Touch gestures are handled by SceneView's orbit camera.
+ * Jenny's 3D room and avatar viewer.
+ * Both GLB assets are loaded from app/src/main/assets/models.
  */
 @Composable
 fun Jenny3DViewer(modifier: Modifier = Modifier) {
-    var modelReady by remember { mutableStateOf(false) }
+    var modelsReady by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.background(Color(0xFF171827)),
@@ -38,11 +36,23 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             surfaceType = SurfaceType.TextureSurface
         ) {
-            val instance = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
+            val room = rememberModelInstance(modelLoader, "models/Jenny_room_environment.glb")
+            val jenny = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
+
             SideEffect {
-                modelReady = instance != null
+                modelsReady = room != null && jenny != null
             }
-            instance?.let {
+
+            room?.let {
+                ModelNode(
+                    modelInstance = it,
+                    autoAnimate = false,
+                    scaleToUnits = 5.2f,
+                    centerOrigin = Position(x = 0f, y = -1.5f, z = 0f)
+                )
+            }
+
+            jenny?.let {
                 ModelNode(
                     modelInstance = it,
                     autoAnimate = false,
@@ -55,9 +65,9 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             }
         }
 
-        if (!modelReady) {
+        if (!modelsReady) {
             Text(
-                text = "مدل سه‌بعدی جنی در حال بارگذاری است…",
+                text = "در حال بارگذاری اتاق و مدل سه‌بعدی جنی…",
                 color = Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium
