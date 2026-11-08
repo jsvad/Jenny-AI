@@ -1,6 +1,6 @@
 name = "jenny-ai-private-api"
 main = "worker.js"
-compatibility_date = "2026-11-08"
+compatibility_date = "2026-11-07"
 
 [ai]
 binding = "AI"
