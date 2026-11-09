@@ -20,9 +20,7 @@ import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.SurfaceType
 
 /**
- * Lightweight Jenny avatar viewer.
- * Load the character directly so a separate room/environment asset cannot
- * obscure the avatar or leave the screen showing only environment props.
+ * Displays the rigged Jenny character bundled with the application.
  */
 @Composable
 fun Jenny3DViewer(modifier: Modifier = Modifier) {
@@ -36,8 +34,8 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             surfaceType = SurfaceType.TextureSurface
         ) {
-            // jenny.glb is the complete rigged character asset bundled with the app.
-            val jenny = rememberModelInstance(modelLoader, "models/jenny.glb")
+            // Use the explicitly rigged asset so later pose tracking can drive its bones.
+            val jenny = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
 
             SideEffect {
                 modelReady = jenny != null
@@ -47,7 +45,7 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
                 ModelNode(
                     modelInstance = instance,
                     autoAnimate = false,
-                    animationName = "Idle",
+                    animationName = "idle",
                     animationLoop = true,
                     animationSpeed = 1f,
                     scaleToUnits = 2.0f
