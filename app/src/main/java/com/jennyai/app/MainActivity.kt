@@ -217,7 +217,7 @@ private fun JennyApp(activity: MainActivity) {
             activity.startPersianListening(
                 onResult = { spoken ->
                     message = spoken
-                    status = "صدایت به متن تبدیل شد؛ برای دریافت پاسخ ارسال را بزن."
+                    sendMessage(spoken)
                 },
                 onError = { error -> status = error }
             )
@@ -226,8 +226,8 @@ private fun JennyApp(activity: MainActivity) {
         }
     }
 
-    fun sendMessage() {
-        val userMessage = message.trim()
+    fun sendMessage(voiceOrTypedMessage: String = message.trim()) {
+        val userMessage = voiceOrTypedMessage.trim()
         if (userMessage.isBlank()) return
         val previousConversation = conversation.takeLast(5000)
         message = ""
@@ -449,7 +449,7 @@ private fun JennyApp(activity: MainActivity) {
                                 activity.startPersianListening(
                                     onResult = { spoken ->
                                         message = spoken
-                                        status = "متن صدایت آماده است؛ ارسال را بزن."
+                                        sendMessage(spoken)
                                     },
                                     onError = { error -> status = error }
                                 )
