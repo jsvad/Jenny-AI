@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -77,25 +78,25 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
                     .padding(horizontal = 8.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(onClick = { selectedAnimation = "idle" }) {
+                Button(onClick = { selectedAnimation = "idle" }, colors = ButtonDefaults.buttonColors(containerColor = if (selectedAnimation == "idle") Color(0xFF8B5CF6) else Color(0xFF34344A))) {
                     Text("ایستاده")
                 }
-                Button(onClick = { selectedAnimation = "walk" }, modifier = Modifier.padding(start = 6.dp)) {
+                Button(onClick = { selectedAnimation = "walk" }, modifier = Modifier.padding(start = 6.dp), colors = ButtonDefaults.buttonColors(containerColor = if (selectedAnimation == "walk") Color(0xFF8B5CF6) else Color(0xFF34344A))) {
                     Text("راه رفتن")
                 }
-                Button(onClick = { selectedAnimation = "run" }, modifier = Modifier.padding(start = 6.dp)) {
+                Button(onClick = { selectedAnimation = "run" }, modifier = Modifier.padding(start = 6.dp), colors = ButtonDefaults.buttonColors(containerColor = if (selectedAnimation == "run") Color(0xFF8B5CF6) else Color(0xFF34344A))) {
                     Text("دویدن")
                 }
-                Button(onClick = { selectedAnimation = "wave" }, modifier = Modifier.padding(start = 6.dp)) {
+                Button(onClick = { selectedAnimation = "wave" }, modifier = Modifier.padding(start = 6.dp), colors = ButtonDefaults.buttonColors(containerColor = if (selectedAnimation == "wave") Color(0xFF8B5CF6) else Color(0xFF34344A))) {
                     Text("سلام")
                 }
-                Button(onClick = { selectedAnimation = "jump" }, modifier = Modifier.padding(start = 6.dp)) {
+                Button(onClick = { selectedAnimation = "jump" }, modifier = Modifier.padding(start = 6.dp), colors = ButtonDefaults.buttonColors(containerColor = if (selectedAnimation == "jump") Color(0xFF8B5CF6) else Color(0xFF34344A))) {
                     Text("پرش")
                 }
-                Button(onClick = { selectedAnimation = "walk-cartoon" }, modifier = Modifier.padding(start = 6.dp)) {
+                Button(onClick = { selectedAnimation = "walk-cartoon" }, modifier = Modifier.padding(start = 6.dp), colors = ButtonDefaults.buttonColors(containerColor = if (selectedAnimation == "walk-cartoon") Color(0xFF8B5CF6) else Color(0xFF34344A))) {
                     Text("راه‌رفتن کارتونی")
                 }
-                Button(onClick = { selectedAnimation = "run-cartoon" }, modifier = Modifier.padding(start = 6.dp)) {
+                Button(onClick = { selectedAnimation = "run-cartoon" }, modifier = Modifier.padding(start = 6.dp), colors = ButtonDefaults.buttonColors(containerColor = if (selectedAnimation == "run-cartoon") Color(0xFF8B5CF6) else Color(0xFF34344A))) {
                     Text("دویدن کارتونی")
                 }
             }
