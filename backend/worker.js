@@ -8,6 +8,16 @@ export default {
     };
 
     if (request.method === 'OPTIONS') return new Response(null, { headers });
+
+    const url = new URL(request.url);
+    if (url.pathname === '/video/generate') {
+      if (request.method !== 'POST') return respond({ error: 'Method not allowed' }, 405, headers);
+      return generateVideo(request, env, headers);
+    }
+    if (url.pathname === '/video/status') {
+      if (request.method !== 'GET') return respond({ error: 'Method not allowed' }, 405, headers);
+      return getVideoStatus(url, env, headers);
+    }
     if (request.method !== 'POST') return respond({ error: 'Method not allowed' }, 405, headers);
     if (!env.AI) return respond({ error: 'Workers AI binding is missing' }, 503, headers);
 
@@ -79,4 +89,107 @@ export default {
 
 function respond(value, status, headers) {
   return new Response(JSON.stringify(value), { status, headers });
+}
+
+
+const FAL_VIDEO_ENDPOINT = 'minimax/h3-max-turbo/image-to-video';
+const FAL_QUEUE_BASE = 'https://queue.fal.run';
+
+async function generateVideo(request, env, headers) {
+  if (!env.FAL_KEY) return respond({ error: 'Fal API key is not configured on the server' }, 503, headers);
+
+  try {
+    const body = await request.json();
+    const prompt = typeof body.prompt === 'string' ? body.prompt.trim().slice(0, 4000) : '';
+    const imageUrl = typeof body.image_url === 'string' ? body.image_url.trim() : '';
+    const duration = Number(body.duration ?? 5);
+    const resolution = body.resolution === '768P' ? '768P' : '480P';
+    const aspectRatio = ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'].includes(body.aspect_ratio)
+      ? body.aspect_ratio : '16:9';
+
+    if (!prompt) return respond({ error: 'Prompt required' }, 400, headers);
+    if (!Number.isFinite(duration) || duration < 3 || duration > 10) {
+      return respond({ error: 'Duration must be between 3 and 10 seconds' }, 400, headers);
+    }
+    if (imageUrl) {
+      let parsed;
+      try { parsed = new URL(imageUrl); } catch { return respond({ error: 'Invalid image URL' }, 400, headers); }
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return respond({ error: 'Image URL must use HTTP or HTTPS' }, 400, headers);
+      }
+    }
+
+    const input = {
+      prompt,
+      prompt_expansion_mode: 'balanced',
+      duration,
+      resolution,
+      aspect_ratio: aspectRatio,
+      enable_safety_checker: true,
+      sync_mode: false
+    };
+    if (imageUrl) input.image_url = imageUrl;
+
+    const upstream = await fetch(`${FAL_QUEUE_BASE}/${FAL_VIDEO_ENDPOINT}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${env.FAL_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(input)
+    });
+    const result = await upstream.json().catch(() => ({}));
+    if (!upstream.ok) {
+      return respond({ error: 'Fal rejected the video request', provider_status: upstream.status }, 502, headers);
+    }
+    return respond({
+      request_id: result.request_id,
+      status: result.status || 'IN_QUEUE',
+      status_url: '/video/status'
+    }, 202, headers);
+  } catch {
+    return respond({ error: 'Video request failed' }, 502, headers);
+  }
+}
+
+async function getVideoStatus(url, env, headers) {
+  if (!env.FAL_KEY) return respond({ error: 'Fal API key is not configured on the server' }, 503, headers);
+  const requestId = url.searchParams.get('request_id') || '';
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId)) {
+    return respond({ error: 'Valid request_id required' }, 400, headers);
+  }
+
+  try {
+    const base = `${FAL_QUEUE_BASE}/minimax/h3-max-turbo/requests/${requestId}`;
+    const statusResponse = await fetch(`${base}/status`, {
+      headers: { 'Authorization': `Key ${env.FAL_KEY}` }
+    });
+    const status = await statusResponse.json().catch(() => ({}));
+    if (!statusResponse.ok) {
+      return respond({ error: 'Could not read Fal job status', provider_status: statusResponse.status }, 502, headers);
+    }
+    if (status.status !== 'COMPLETED') {
+      return respond({ request_id: requestId, status: status.status || 'IN_PROGRESS' }, 200, headers);
+    }
+
+    const resultResponse = await fetch(base, {
+      headers: { 'Authorization': `Key ${env.FAL_KEY}` }
+    });
+    const result = await resultResponse.json().catch(() => ({}));
+    if (!resultResponse.ok) {
+      return respond({ error: 'Fal video result is not available', provider_status: resultResponse.status }, 502, headers);
+    }
+    const videoUrl = result.video && result.video.url;
+    if (typeof videoUrl !== 'string' || !videoUrl.startsWith('https://')) {
+      return respond({ error: 'Fal completed without a valid video URL' }, 502, headers);
+    }
+    return respond({
+      request_id: requestId,
+      status: 'COMPLETED',
+      video_url: videoUrl,
+      content_type: result.video.content_type || 'video/mp4'
+    }, 200, headers);
+  } catch {
+    return respond({ error: 'Fal status check failed' }, 502, headers);
+  }
 }
