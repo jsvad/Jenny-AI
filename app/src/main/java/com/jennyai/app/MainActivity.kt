@@ -209,23 +209,6 @@ private fun JennyApp(activity: MainActivity) {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
     }
 
-    val microphonePermission = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            status = "در حال شنیدن..."
-            activity.startPersianListening(
-                onResult = { spoken ->
-                    message = spoken
-                    sendMessage(spoken)
-                },
-                onError = { error -> status = error }
-            )
-        } else {
-            status = "برای صحبت با جنی باید مجوز میکروفون را فعال کنی."
-        }
-    }
-
     fun sendMessage(voiceOrTypedMessage: String = message.trim()) {
         val userMessage = voiceOrTypedMessage.trim()
         if (userMessage.isBlank()) return
@@ -287,6 +270,23 @@ private fun JennyApp(activity: MainActivity) {
                 connection?.disconnect()
             }
         }.start()
+    }
+
+    val microphonePermission = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            status = "در حال شنیدن..."
+            activity.startPersianListening(
+                onResult = { spoken ->
+                    message = spoken
+                    sendMessage(spoken)
+                },
+                onError = { error -> status = error }
+            )
+        } else {
+            status = "برای صحبت با جنی باید مجوز میکروفون را فعال کنی."
+        }
     }
 
     MaterialTheme {
