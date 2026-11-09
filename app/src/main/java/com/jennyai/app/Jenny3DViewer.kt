@@ -30,8 +30,8 @@ fun Jenny3DViewer(animationName: String = "idle", modifier: Modifier = Modifier)
     var modelReady by remember { mutableStateOf(false) }
     val engine = rememberEngine()
     val cameraNode = rememberCameraNode(engine) {
-        position = Position(0f, 1.0f, 4.5f)
-        lookAt(Position(0f, 1.0f, 0f))
+        position = Position(0f, 1.35f, 5.2f)
+        lookAt(Position(0f, 1.15f, 0f))
     }
 
     Box(
@@ -44,21 +44,34 @@ fun Jenny3DViewer(animationName: String = "idle", modifier: Modifier = Modifier)
             cameraNode = cameraNode,
             surfaceType = SurfaceType.TextureSurface
         ) {
-            // Use the explicitly rigged asset so later pose tracking can drive its bones.
+            // Load the actual bedroom first so it renders behind Jenny.
+            val room = rememberModelInstance(modelLoader, "models/Jenny_room_environment.glb")
+            // Jenny remains a separate rigged model so voice commands can switch her clips.
             val jenny = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
 
             SideEffect {
-                modelReady = jenny != null
+                modelReady = room != null && jenny != null
             }
 
-            jenny?.let { instance ->
+            room?.let { roomInstance ->
                 ModelNode(
-                    modelInstance = instance,
+                    modelInstance = roomInstance,
+                    autoAnimate = false,
+                    scaleToUnits = 7.5f,
+                    position = Position(0f, 0f, -1.2f)
+                )
+            }
+
+            jenny?.let { avatarInstance ->
+                ModelNode(
+                    modelInstance = avatarInstance,
                     autoAnimate = false,
                     animationName = animationName,
                     animationLoop = true,
                     animationSpeed = 1f,
-                    scaleToUnits = 2.0f
+                    scaleToUnits = 1.75f,
+                    centerOrigin = Position(0f, -1f, 0f),
+                    position = Position(0f, 0.02f, 0.15f)
                 )
             }
         }
