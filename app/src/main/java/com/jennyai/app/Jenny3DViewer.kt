@@ -96,8 +96,7 @@ fun Jenny3DViewer(animationName: String = "idle", modifier: Modifier = Modifier)
                     animationLoop = true,
                     animationSpeed = 1f,
                     scaleToUnits = 1.75f,
-                    centerOrigin = Position(0f, -1f, 0f),
-                    position = Position(avatarX, 0.02f, 0.15f)
+                    position = Position(avatarX, 0.9f, 0.15f)
                 )
             }
         }
