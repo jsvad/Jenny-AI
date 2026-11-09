@@ -22,6 +22,16 @@ class JennyCommandInterpreterTest {
         assertEquals("walk", JennyCommandInterpreter.parse("جنی برو")?.animationName)
     }
 
+    @Test fun recognizesWaveAndJumpClipsPresentInRiggedModel() {
+        assertEquals("wave", JennyCommandInterpreter.parse("جنی دست تکون بده")?.animationName)
+        assertEquals("jump", JennyCommandInterpreter.parse("جنی بپر")?.animationName)
+    }
+
+    @Test fun doesNotMapUnsupportedSitOrTurnToMissingClips() {
+        assertNull(JennyCommandInterpreter.parse("جنی بشین"))
+        assertNull(JennyCommandInterpreter.parse("جنی برگرد"))
+    }
+
     @Test fun doesNotTurnOrdinaryChatIntoMovement() {
         assertNull(JennyCommandInterpreter.parse("امروز هوا چطوره؟"))
     }
