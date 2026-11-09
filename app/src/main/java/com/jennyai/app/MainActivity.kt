@@ -118,6 +118,73 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
     fun stopPersianSpeaking() { tts?.stop() }
 
+    fun generateFalVideo(prompt: String, imageUrl: String, onResult: (String?, String?) -> Unit) {
+        Thread {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = (URL("https://jenny-ai.javademad83.workers.dev/video/generate").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 20000
+                    readTimeout = 45000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                }
+                val payload = JSONObject()
+                    .put("prompt", prompt)
+                    .put("duration", 5)
+                    .put("resolution", "480P")
+                    .put("aspect_ratio", "16:9")
+                if (imageUrl.isNotBlank()) payload.put("image_url", imageUrl.trim())
+                connection.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val json = JSONObject(stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty().ifBlank { "{}" })
+                if (code !in 200..299) throw IllegalStateException(json.optString("error", "خطای سرور ($code)"))
+                val requestId = json.optString("request_id").trim()
+                if (requestId.isBlank()) throw IllegalStateException("شناسه درخواست از سرور دریافت نشد.")
+                activityRunOnUiThread(onResult, requestId, null)
+            } catch (error: Exception) {
+                activityRunOnUiThread(onResult, null, error.localizedMessage ?: "ارسال درخواست ویدیو ناموفق بود.")
+            } finally {
+                connection?.disconnect()
+            }
+        }.start()
+    }
+
+    fun checkFalVideo(requestId: String, onResult: (String, String?, String?) -> Unit) {
+        Thread {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = (URL("https://jenny-ai.javademad83.workers.dev/video/status?request_id=$requestId").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 20000
+                    readTimeout = 45000
+                }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val json = JSONObject(stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty().ifBlank { "{}" })
+                if (code !in 200..299) throw IllegalStateException(json.optString("error", "خطای سرور ($code)"))
+                val state = json.optString("status", "IN_PROGRESS")
+                val videoUrl = json.optString("video_url").takeIf { it.startsWith("https://") }
+                activity.runOnUiThread { onResult(state, videoUrl, null) }
+            } catch (error: Exception) {
+                activity.runOnUiThread { onResult("ERROR", null, error.localizedMessage ?: "بررسی وضعیت ناموفق بود.") }
+            } finally {
+                connection?.disconnect()
+            }
+        }.start()
+    }
+
+    private fun activityRunOnUiThread(callback: (String?, String?) -> Unit, value: String?, error: String?) {
+        runOnUiThread { callback(value, error) }
+    }
+
+    fun openGeneratedVideo(videoUrl: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(videoUrl)))
+        } catch (_: Exception) { }
+    }
+
     fun startPersianListening(onResult: (String) -> Unit, onError: (String) -> Unit) {
         val recognizer = speechRecognizer
         if (recognizer == null) {
@@ -205,6 +272,13 @@ private fun JennyApp(activity: MainActivity) {
         )
     }
     var status by remember { mutableStateOf("آماده") }
+    var showVideoStudio by remember { mutableStateOf(false) }
+    var videoPrompt by remember { mutableStateOf("") }
+    var videoImageUrl by remember { mutableStateOf("") }
+    var videoJobId by remember { mutableStateOf("") }
+    var videoJobStatus by remember { mutableStateOf("") }
+    var generatedVideoUrl by remember { mutableStateOf("") }
+    var videoBusy by remember { mutableStateOf(false) }
     val avatarBitmap = remember {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
     }
@@ -373,6 +447,91 @@ private fun JennyApp(activity: MainActivity) {
                         onClick = { activity.installPersianVoice() },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7657E8))
                     ) { Text("نصب صدای فارسی") }
+                }
+
+
+                Button(
+                    onClick = { showVideoStudio = !showVideoStudio },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50)),
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text(if (showVideoStudio) "بستن استودیو ویدیو" else "🎬 استودیو ساخت ویدیو با Fal") }
+
+                if (showVideoStudio) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF202437)),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                            OutlinedTextField(
+                                value = videoPrompt,
+                                onValueChange = { videoPrompt = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("توضیح ویدیو") },
+                                placeholder = { Text("مثلاً حرکت آرام دوربین در یک شهر آینده‌نگر") },
+                                maxLines = 3,
+                                textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, textAlign = TextAlign.Right)
+                            )
+                            OutlinedTextField(
+                                value = videoImageUrl,
+                                onValueChange = { videoImageUrl = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("لینک تصویر مرجع (اختیاری)") },
+                                singleLine = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, textAlign = TextAlign.Left)
+                            )
+                            Text(
+                                videoJobStatus.ifBlank { "۵ ثانیه • کیفیت آزمایشی 480P • تولید ابری با هزینه احتمالی" },
+                                color = Color(0xFFB6BAD0),
+                                fontSize = 11.sp
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    enabled = !videoBusy && videoPrompt.isNotBlank(),
+                                    onClick = {
+                                        videoBusy = true
+                                        videoJobStatus = "در حال ارسال درخواست به Fal..."
+                                        activity.generateFalVideo(videoPrompt, videoImageUrl) { requestId, error ->
+                                            videoBusy = false
+                                            if (requestId != null) {
+                                                videoJobId = requestId
+                                                generatedVideoUrl = ""
+                                                videoJobStatus = "در صف تولید قرار گرفت. شناسه: $requestId"
+                                            } else {
+                                                videoJobStatus = error ?: "خطای نامشخص"
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7657E8))
+                                ) { Text(if (videoBusy) "در حال ارسال..." else "ساخت ویدیو") }
+                                Button(
+                                    enabled = !videoBusy && videoJobId.isNotBlank(),
+                                    onClick = {
+                                        videoBusy = true
+                                        videoJobStatus = "در حال بررسی وضعیت..."
+                                        activity.checkFalVideo(videoJobId) { state, url, error ->
+                                            videoBusy = false
+                                            if (error != null) videoJobStatus = error
+                                            else if (url != null) {
+                                                generatedVideoUrl = url
+                                                videoJobStatus = "ویدیو آماده است."
+                                            } else videoJobStatus = "وضعیت تولید: $state"
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50))
+                                ) { Text("بررسی") }
+                            }
+                            if (generatedVideoUrl.isNotBlank()) {
+                                Button(
+                                    onClick = { activity.openGeneratedVideo(generatedVideoUrl) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF287A62))
+                                ) { Text("پخش ویدیو") }
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
