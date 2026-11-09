@@ -36,13 +36,15 @@ When a provider is selected and its current terms are checked:
 
 - [x] Jenny's assistant prompt includes video-director and storyboard behavior.
 - [x] Documentation distinguishes prompt planning from actual video generation.
-- [ ] Video provider selected and verified for the required age, region, terms, and budget.
-- [ ] Server-side video job API.
-- [ ] Android video studio UI and upload flow.
-- [ ] MP4 preview and save flow.
-- [ ] End-to-end test with a real generated clip.
+- [x] Fal video model selected and verified against the live schema.
+- [x] Server-side video job submission and status/result routes implemented.
+- [x] Android video studio prompt UI and job polling implemented.
+- [x] MP4 handoff to the device player implemented.
+- [ ] Add the `FAL_KEY` Cloudflare Worker secret and deploy the updated Worker.
+- [ ] Add production rate limiting / per-user quota enforcement.
+- [ ] End-to-end test with a real generated clip and installable APK.
 
-No video provider has been connected and no video-generation endpoint is deployed.
+The integration code is in the open pull request, but live generation is not enabled until the server secret is configured and the Worker is deployed.
 
 
 ## Fal integration (backend)
