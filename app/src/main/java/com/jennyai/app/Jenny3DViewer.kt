@@ -2,7 +2,11 @@ package com.jennyai.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.align
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -14,17 +18,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.sceneview.Scene
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.SurfaceType
 
 /**
- * Displays the rigged Jenny character bundled with the application.
+ * Displays Jenny and lets the user switch between animation clips bundled in the GLB.
  */
 @Composable
 fun Jenny3DViewer(modifier: Modifier = Modifier) {
     var modelReady by remember { mutableStateOf(false) }
+    var selectedAnimation by remember { mutableStateOf("idle") }
 
     Box(
         modifier = modifier.background(Color(0xFF171827)),
@@ -34,7 +40,7 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             surfaceType = SurfaceType.TextureSurface
         ) {
-            // Use the explicitly rigged asset so later pose tracking can drive its bones.
+            // Clip names are case-sensitive and were verified from Jenny_rigged.glb.
             val jenny = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
 
             SideEffect {
@@ -45,7 +51,7 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
                 ModelNode(
                     modelInstance = instance,
                     autoAnimate = false,
-                    animationName = "Idle",
+                    animationName = selectedAnimation,
                     animationLoop = true,
                     animationSpeed = 0.9f,
                     scaleToUnits = 2.0f
@@ -60,6 +66,29 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium
             )
+        } else {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(onClick = { selectedAnimation = "idle" }) {
+                    Text("ایستاده")
+                }
+                Button(
+                    onClick = { selectedAnimation = "wave" },
+                    modifier = Modifier.padding(start = 6.dp)
+                ) {
+                    Text("سلام")
+                }
+                Button(
+                    onClick = { selectedAnimation = "walk" },
+                    modifier = Modifier.padding(start = 6.dp)
+                ) {
+                    Text("راه رفتن")
+                }
+            }
         }
     }
 }
