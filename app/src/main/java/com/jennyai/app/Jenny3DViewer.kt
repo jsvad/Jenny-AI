@@ -44,10 +44,10 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             jenny?.let { instance ->
                 ModelNode(
                     modelInstance = instance,
-                    autoAnimate = true,
+                    autoAnimate = false,
                     animationName = "Idle",
                     animationLoop = true,
-                    animationSpeed = 1f,
+                    animationSpeed = 0.9f,
                     scaleToUnits = 2.0f
                 )
             }
