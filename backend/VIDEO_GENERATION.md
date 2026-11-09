@@ -43,3 +43,26 @@ When a provider is selected and its current terms are checked:
 - [ ] End-to-end test with a real generated clip.
 
 No video provider has been connected and no video-generation endpoint is deployed.
+
+
+## Fal integration (backend)
+
+Jenny's Cloudflare Worker now exposes two Fal-backed routes:
+
+- `POST /video/generate` with JSON `{ "prompt": "...", "duration": 5, "resolution": "480P", "aspect_ratio": "16:9", "image_url": "https://..." }`. Omit `image_url` for text-to-video; provide it for image-to-video.
+- `GET /video/status?request_id=<uuid>` to poll the same queued job. A completed response includes `video_url` and `content_type`.
+
+The route uses the verified Fal endpoint `minimax/h3-max-turbo/image-to-video`, which supports prompt-only and image-anchored generation. It limits duration to 3–10 seconds, defaults to 480P, enables the model safety checker, and returns a job ID rather than pretending the video is ready immediately.
+
+### Required Cloudflare setup
+
+1. Create a Fal API key in the Fal dashboard with permission to submit model requests.
+2. In the Cloudflare Worker settings for `jenny-ai-private-api`, add a secret named `FAL_KEY` (never put the key in Git, app source, or the APK).
+3. Deploy the updated `backend/worker.js`.
+4. Test the two routes using a short prompt and a small duration first. Hosted video generation is paid; Fal's account pricing and balance apply.
+
+**Security note:** these routes must be protected against public abuse before a public production release. Configure Cloudflare rate limiting / bot protection for both video routes and monitor Fal spending limits. The current prototype validates inputs and keeps the provider key server-side, but it does not yet implement per-user authentication or durable per-user quotas.
+
+### Android client status
+
+The backend integration is implemented and tested in CI. The Android screen/client still needs to call these routes, display queue/progress states, and preview/save the returned MP4. Until that client work and a real Fal-key end-to-end test are complete, the feature is not yet available inside the installed APK.
