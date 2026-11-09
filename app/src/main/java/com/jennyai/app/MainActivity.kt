@@ -166,7 +166,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                 if (code !in 200..299) throw IllegalStateException(json.optString("error", "خطای سرور ($code)"))
                 val state = json.optString("status", "IN_PROGRESS")
                 val videoUrl = json.optString("video_url").takeIf { it.startsWith("https://") }
-                activity.runOnUiThread { onResult(state, videoUrl, null) }
+                runOnUiThread { onResult(state, videoUrl, null) }
             } catch (error: Exception) {
                 activity.runOnUiThread { onResult("ERROR", null, error.localizedMessage ?: "بررسی وضعیت ناموفق بود.") }
             } finally {
