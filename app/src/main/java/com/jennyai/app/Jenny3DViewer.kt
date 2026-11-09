@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import io.github.sceneview.Scene
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberCameraNode
+import io.github.sceneview.math.Position
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.SurfaceType
 
@@ -25,6 +28,11 @@ import io.github.sceneview.SurfaceType
 @Composable
 fun Jenny3DViewer(animationName: String = "idle", modifier: Modifier = Modifier) {
     var modelReady by remember { mutableStateOf(false) }
+    val engine = rememberEngine()
+    val cameraNode = rememberCameraNode(engine) {
+        position = Position(0f, 1.0f, 4.5f)
+        lookAt(Position(0f, 1.0f, 0f))
+    }
 
     Box(
         modifier = modifier.background(Color(0xFF171827)),
@@ -32,6 +40,8 @@ fun Jenny3DViewer(animationName: String = "idle", modifier: Modifier = Modifier)
     ) {
         Scene(
             modifier = Modifier.fillMaxSize(),
+            engine = engine,
+            cameraNode = cameraNode,
             surfaceType = SurfaceType.TextureSurface
         ) {
             // Use the explicitly rigged asset so later pose tracking can drive its bones.
