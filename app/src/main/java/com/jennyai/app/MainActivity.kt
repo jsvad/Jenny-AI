@@ -273,6 +273,25 @@ private fun JennyApp(activity: MainActivity) {
         }.start()
     }
 
+    fun handleVoiceInput(spoken: String) {
+        message = spoken
+        val command = JennyCommandInterpreter.parse(spoken)
+        if (command != null) {
+            avatarAnimation = command.animationName
+            val reply = command.confirmation
+            conversation = if (conversation.isBlank()) {
+                "تو: $spoken\\n\\nجنی: $reply"
+            } else {
+                "$conversation\\n\\n────────────\\n\\nتو: $spoken\\n\\nجنی: $reply"
+            }
+            chatPreferences.edit().putString("conversation", conversation).apply()
+            status = reply
+            activity.speakPersian(reply)
+        } else {
+            sendMessage(spoken)
+        }
+    }
+
     val microphonePermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
