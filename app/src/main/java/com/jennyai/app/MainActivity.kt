@@ -205,6 +205,7 @@ private fun JennyApp(activity: MainActivity) {
         )
     }
     var status by remember { mutableStateOf("آماده") }
+    var avatarAnimation by remember { mutableStateOf("idle") }
     val avatarBitmap = remember {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
     }
@@ -278,10 +279,7 @@ private fun JennyApp(activity: MainActivity) {
         if (granted) {
             status = "در حال شنیدن..."
             activity.startPersianListening(
-                onResult = { spoken ->
-                    message = spoken
-                    sendMessage(spoken)
-                },
+                onResult = { spoken -> handleVoiceInput(spoken) },
                 onError = { error -> status = error }
             )
         } else {
@@ -329,6 +327,7 @@ private fun JennyApp(activity: MainActivity) {
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         Jenny3DViewer(
+                            animationName = avatarAnimation,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(28.dp))
@@ -447,10 +446,7 @@ private fun JennyApp(activity: MainActivity) {
                             if (hasPermission) {
                                 status = "در حال شنیدن…"
                                 activity.startPersianListening(
-                                    onResult = { spoken ->
-                                        message = spoken
-                                        sendMessage(spoken)
-                                    },
+                                    onResult = { spoken -> handleVoiceInput(spoken) },
                                     onError = { error -> status = error }
                                 )
                             } else {
