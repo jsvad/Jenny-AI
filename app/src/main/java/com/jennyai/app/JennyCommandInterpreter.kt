@@ -32,12 +32,12 @@ object JennyCommandInterpreter {
             "وایسا" to JennyAvatarCommand("idle", "ایستادم."),
             "توقف کن" to JennyAvatarCommand("idle", "حرکتم متوقف شد."),
             "متوقف شو" to JennyAvatarCommand("idle", "حرکتم متوقف شد."),
-            "بشین" to JennyAvatarCommand("sit", "باشه، می‌شینم."),
-            "بنشین" to JennyAvatarCommand("sit", "باشه، می‌شینم."),
-            "بلند شو" to JennyAvatarCommand("stand", "بلند شدم."),
+            "بلند شو" to JennyAvatarCommand("idle", "بلند شدم."),
             "دست تکون بده" to JennyAvatarCommand("wave", "سلام!"),
             "دستت رو تکون بده" to JennyAvatarCommand("wave", "سلام!"),
-            "برگرد" to JennyAvatarCommand("turn", "دارم برمی‌گردم.")
+            "بپر" to JennyAvatarCommand("jump", "باشه، می‌پرم."),
+            "راه برو کارتونی" to JennyAvatarCommand("walk-cartoon", "با حالت کارتونی راه می‌رم."),
+            "بدو کارتونی" to JennyAvatarCommand("run-cartoon", "با حالت کارتونی می‌دوم.")
         )
         commands[phrase]?.let { return it }
         if (!addressedToJenny) return null
