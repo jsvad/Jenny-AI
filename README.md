@@ -7,7 +7,7 @@ Jenny-AI is an Android-first Persian-language assistant prototype.
 - Kotlin and Jetpack Compose Android app
 - Persian right-to-left interface
 - 3D Jenny character loaded from the bundled `models/Jenny_rigged.glb` asset
-- On-screen controls for the bundled idle, wave, and walk animation clips
+- Scrollable on-screen controls for all seven verified body animation clips
 - Android speech recognition configured for Persian (`fa-IR`), where the device speech service supports it
 - Android text-to-speech configured for Persian (`fa-IR`), where a Persian voice is installed
 - Online AI chat through the Jenny Cloudflare Worker endpoint
@@ -39,7 +39,7 @@ A successful CI build and signature check do not replace a real installation tes
 
 ## Avatar animation status
 
-The GLB contains seven case-sensitive animation clips: `idle`, `walk`, `run`, `walk-cartoon`, `run-cartoon`, `wave`, and `jump`. The viewer uses `autoAnimate = false` and explicitly selects a clip, so it does not play every animation at once. The current UI exposes idle, wave, and walk. The model has 22 skin joints and no morph targets, so these clips animate the body but do not provide facial expressions or lip synchronization.
+The GLB contains seven case-sensitive animation clips: `idle`, `walk`, `run`, `walk-cartoon`, `run-cartoon`, `wave`, and `jump`. The viewer uses `autoAnimate = false` and explicitly selects a clip, so it does not play every animation at once. The current scrollable UI exposes all seven clips. The model has 22 skin joints and no morph targets, so these clips animate the body but do not provide facial expressions or lip synchronization.
 
 ## Build an APK
 
