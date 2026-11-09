@@ -1,10 +1,13 @@
 package com.jennyai.app
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +27,7 @@ import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.SurfaceType
 
 /**
- * Displays Jenny and lets the user switch between animation clips bundled in the GLB.
+ * Displays Jenny and exposes every verified body animation clip in the bundled GLB.
  */
 @Composable
 fun Jenny3DViewer(modifier: Modifier = Modifier) {
@@ -69,23 +72,31 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 20.dp),
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(onClick = { selectedAnimation = "idle" }) {
                     Text("ایستاده")
                 }
-                Button(
-                    onClick = { selectedAnimation = "wave" },
-                    modifier = Modifier.padding(start = 6.dp)
-                ) {
+                Button(onClick = { selectedAnimation = "walk" }, modifier = Modifier.padding(start = 6.dp)) {
+                    Text("راه رفتن")
+                }
+                Button(onClick = { selectedAnimation = "run" }, modifier = Modifier.padding(start = 6.dp)) {
+                    Text("دویدن")
+                }
+                Button(onClick = { selectedAnimation = "wave" }, modifier = Modifier.padding(start = 6.dp)) {
                     Text("سلام")
                 }
-                Button(
-                    onClick = { selectedAnimation = "walk" },
-                    modifier = Modifier.padding(start = 6.dp)
-                ) {
-                    Text("راه رفتن")
+                Button(onClick = { selectedAnimation = "jump" }, modifier = Modifier.padding(start = 6.dp)) {
+                    Text("پرش")
+                }
+                Button(onClick = { selectedAnimation = "walk-cartoon" }, modifier = Modifier.padding(start = 6.dp)) {
+                    Text("راه‌رفتن کارتونی")
+                }
+                Button(onClick = { selectedAnimation = "run-cartoon" }, modifier = Modifier.padding(start = 6.dp)) {
+                    Text("دویدن کارتونی")
                 }
             }
         }
