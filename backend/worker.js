@@ -58,7 +58,7 @@ export default {
       }
       messages.push({ role: 'user', content: message });
 
-      const result = await env.AI.run('@cf/google/gemma-4-26b-a4b-it', {
+      const result = await env.AI.run('@cf/zai-org/glm-4.7-flash', {
         messages,
         chat_template_kwargs: { enable_thinking: false },
         max_tokens: 700
