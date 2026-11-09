@@ -18,7 +18,7 @@ Jenny-AI is an Android-first Persian-language assistant prototype.
 
 ## Important limitations
 
-This is not yet the finished production assistant. Offline replies are a small rule-based fallback, not a local language model. Speech recognition may use an online service depending on the Android speech provider and downloaded language packs. Persian text-to-speech requires a compatible voice installed on the device. Audio-driven lip synchronization and advanced facial/body expressions are not implemented yet.
+This is not yet the finished production assistant. Offline replies are a small rule-based fallback, not a local language model. Jenny can help develop video concepts, shot lists, camera directions, and generation prompts through its chat model, but direct text-to-video or image-to-video generation is not integrated yet. Speech recognition may use an online service depending on the Android speech provider and downloaded language packs. Persian text-to-speech requires a compatible voice installed on the device. Audio-driven lip synchronization and advanced facial/body expressions are not implemented yet. No video-generation provider or MP4 rendering pipeline is currently connected; the app must not present prompt planning as completed video generation.
 
 The online AI service requires a correctly configured Cloudflare Worker AI binding. Never commit API keys or private credentials to this public repository or embed them in the APK.
 
