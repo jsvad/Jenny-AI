@@ -2,7 +2,7 @@
 
 Jenny-AI is an Android-first Persian-language assistant prototype.
 
-## Current build: 0.3.7
+## Current build: 0.3.8
 
 - Kotlin and Jetpack Compose Android app
 - Persian right-to-left interface
@@ -10,6 +10,8 @@ Jenny-AI is an Android-first Persian-language assistant prototype.
 - Android speech recognition configured for Persian (`fa-IR`), where the device speech service supports it
 - Android text-to-speech configured for Persian (`fa-IR`), where a Persian voice is installed
 - Online AI chat through the Jenny Cloudflare Worker endpoint
+- Fal-powered text-to-video and image-to-video job submission from the in-app video studio (requires a server-side `FAL_KEY` secret)
+- Video job status polling and MP4 handoff to the device's video player
 - Limited offline fallback replies when the network or AI service is unavailable
 - Conversation transcript saved locally and restored when the app is reopened
 - Stop-speaking control
@@ -18,7 +20,7 @@ Jenny-AI is an Android-first Persian-language assistant prototype.
 
 ## Important limitations
 
-This is not yet the finished production assistant. Offline replies are a small rule-based fallback, not a local language model. Jenny can help develop video concepts, shot lists, camera directions, and generation prompts through its chat model, but direct text-to-video or image-to-video generation is not integrated yet. Speech recognition may use an online service depending on the Android speech provider and downloaded language packs. Persian text-to-speech requires a compatible voice installed on the device. Audio-driven lip synchronization and advanced facial/body expressions are not implemented yet. No video-generation provider or MP4 rendering pipeline is currently connected; the app must not present prompt planning as completed video generation.
+This is not yet the finished production assistant. Offline replies are a small rule-based fallback, not a local language model. Jenny can help develop video concepts, shot lists, camera directions, and generation prompts through its chat model, but the Fal video studio is available when the Cloudflare Worker has a valid `FAL_KEY` secret configured; a live end-to-end generation still depends on the account's Fal access and balance. Speech recognition may use an online service depending on the Android speech provider and downloaded language packs. Persian text-to-speech requires a compatible voice installed on the device. Audio-driven lip synchronization and advanced facial/body expressions are not implemented yet. No video-generation provider or MP4 rendering pipeline is currently connected; the app must not present prompt planning as completed video generation.
 
 The online AI service requires a correctly configured Cloudflare Worker AI binding. Never commit API keys or private credentials to this public repository or embed them in the APK.
 
