@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -63,15 +65,39 @@ fun Jenny3DViewer(animationName: String = "idle", modifier: Modifier = Modifier)
             }
 
             jenny?.let { avatarInstance ->
+                // Resolve the requested short command ("walk", "run", "wave") to the
+                // exact, case-sensitive animation clip name embedded in the GLB.
+                val requestedClip = animationName.substringBefore("-").lowercase()
+                val clipNames = (0 until avatarInstance.animator.animationCount)
+                    .map { avatarInstance.animator.getAnimationName(it) }
+                val resolvedClip = clipNames.firstOrNull {
+                    it.equals(animationName, ignoreCase = true)
+                } ?: clipNames.firstOrNull {
+                    it.substringBefore("_").equals(requestedClip, ignoreCase = true) ||
+                        it.contains(requestedClip, ignoreCase = true)
+                } ?: clipNames.firstOrNull { it.contains("idle", ignoreCase = true) }
+
+                // Walk/run commands also move Jenny to a nearby spot in the room.
+                val targetX = when {
+                    requestedClip == "walk" -> 0.42f
+                    requestedClip == "run" -> 0.82f
+                    else -> 0f
+                }
+                val avatarX by animateFloatAsState(
+                    targetValue = targetX,
+                    animationSpec = tween(durationMillis = 1100),
+                    label = "Jenny room movement"
+                )
+
                 ModelNode(
                     modelInstance = avatarInstance,
                     autoAnimate = false,
-                    animationName = animationName,
+                    animationName = resolvedClip,
                     animationLoop = true,
                     animationSpeed = 1f,
                     scaleToUnits = 1.75f,
                     centerOrigin = Position(0f, -1f, 0f),
-                    position = Position(0f, 0.02f, 0.15f)
+                    position = Position(avatarX, 0.02f, 0.15f)
                 )
             }
         }
