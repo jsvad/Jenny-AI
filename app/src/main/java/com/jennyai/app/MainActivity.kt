@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var speechRecognizer: SpeechRecognizer? = null
+    private var continuousListening = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,7 +119,13 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
     fun stopPersianSpeaking() { tts?.stop() }
 
-    fun startPersianListening(onResult: (String) -> Unit, onError: (String) -> Unit) {
+    fun stopPersianListening() {
+        continuousListening = false
+        try { speechRecognizer?.cancel() } catch (_: Exception) {}
+    }
+
+    fun startPersianListening(onResult: (String) -> Unit, onError: (String) -> Unit, continuous: Boolean = false) {
+        continuousListening = continuous
         val recognizer = speechRecognizer
         if (recognizer == null) {
             onError("سرویس تشخیص گفتار روی این گوشی در دسترس نیست.")
@@ -161,7 +168,16 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                         "درخواست‌های زیادی فرستاده شده؛ کمی صبر کن و دوباره تلاش کن."
                     else -> "تشخیص صدا انجام نشد (کد خطا: $error). اتصال اینترنت و سرویس گفتار را بررسی کن."
                 }
-                onError(message)
+                if (continuousListening && (error == SpeechRecognizer.ERROR_NO_MATCH ||
+                        error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
+                    try { recognizer.startListening(intent) } catch (_: Exception) {
+                        continuousListening = false
+                        onError(message)
+                    }
+                } else {
+                    continuousListening = false
+                    onError(message)
+                }
             }
 
             override fun onResults(results: Bundle?) {
@@ -169,6 +185,12 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                 val spokenText = matches?.firstOrNull().orEmpty()
                 if (spokenText.isNotBlank()) onResult(spokenText)
                 else onError("متنی از صدایت دریافت نشد.")
+                if (continuousListening) {
+                    try { recognizer.startListening(intent) } catch (_: Exception) {
+                        continuousListening = false
+                        onError("ادامه شنیدن صدا ممکن نشد؛ دوباره میکروفون را فعال کن.")
+                    }
+                }
             }
         })
 
@@ -206,6 +228,7 @@ private fun JennyApp(activity: MainActivity) {
     }
     var status by remember { mutableStateOf("آماده") }
     var avatarAnimation by remember { mutableStateOf("idle") }
+    var isListening by remember { mutableStateOf(false) }
     val avatarBitmap = remember {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
     }
@@ -286,8 +309,9 @@ private fun JennyApp(activity: MainActivity) {
             }
             chatPreferences.edit().putString("conversation", conversation).apply()
             status = reply
-            activity.speakPersian(reply)
         } else {
+            isListening = false
+            activity.stopPersianListening()
             sendMessage(spoken)
         }
     }
@@ -296,10 +320,12 @@ private fun JennyApp(activity: MainActivity) {
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            status = "در حال شنیدن..."
+            isListening = true
+            status = "در حال شنیدن… فرمان صوتی بده"
             activity.startPersianListening(
                 onResult = { spoken -> handleVoiceInput(spoken) },
-                onError = { error -> status = error }
+                onError = { error -> isListening = false; status = error },
+                continuous = true
             )
         } else {
             status = "برای صحبت با جنی باید مجوز میکروفون را فعال کنی."
@@ -459,24 +485,32 @@ private fun JennyApp(activity: MainActivity) {
                     }
                     Button(
                         onClick = {
-                            val hasPermission = ContextCompat.checkSelfPermission(
-                                activity, Manifest.permission.RECORD_AUDIO
-                            ) == PackageManager.PERMISSION_GRANTED
-                            if (hasPermission) {
-                                status = "در حال شنیدن…"
-                                activity.startPersianListening(
-                                    onResult = { spoken -> handleVoiceInput(spoken) },
-                                    onError = { error -> status = error }
-                                )
+                            if (isListening) {
+                                activity.stopPersianListening()
+                                isListening = false
+                                status = "شنیدن صدا متوقف شد."
                             } else {
-                                microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
+                                val hasPermission = ContextCompat.checkSelfPermission(
+                                    activity, Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                                if (hasPermission) {
+                                    isListening = true
+                                    status = "در حال شنیدن… فرمان صوتی بده"
+                                    activity.startPersianListening(
+                                        onResult = { spoken -> handleVoiceInput(spoken) },
+                                        onError = { error -> isListening = false; status = error },
+                                        continuous = true
+                                    )
+                                } else {
+                                    microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
+                                }
                             }
                         },
                         modifier = Modifier.size(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50)),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Icon(Icons.Default.Mic, contentDescription = "میکروفون")
+                        Icon(Icons.Default.Mic, contentDescription = if (isListening) "توقف شنیدن" else "شروع شنیدن")
                     }
                     Button(
                         onClick = {
