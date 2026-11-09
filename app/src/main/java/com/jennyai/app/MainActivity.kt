@@ -300,6 +300,10 @@ private fun JennyApp(activity: MainActivity) {
         message = spoken
         val command = JennyCommandInterpreter.parse(spoken)
         if (command != null) {
+            // Finish this listening turn before Jenny speaks, so the microphone
+            // does not mistake her own TTS confirmation for another command.
+            isListening = false
+            activity.stopPersianListening()
             avatarAnimation = command.animationName
             val reply = command.confirmation
             conversation = if (conversation.isBlank()) {
@@ -308,7 +312,11 @@ private fun JennyApp(activity: MainActivity) {
                 "$conversation\\n\\n────────────\\n\\nتو: $spoken\\n\\nجنی: $reply"
             }
             chatPreferences.edit().putString("conversation", conversation).apply()
-            status = reply
+            status = if (activity.speakPersian(reply)) {
+                reply
+            } else {
+                "$reply برای شنیدن پاسخ‌ها، صدای فارسی گوشی را نصب کن."
+            }
         } else {
             isListening = false
             activity.stopPersianListening()
