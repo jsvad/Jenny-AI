@@ -12,8 +12,8 @@ android {
         applicationId = "com.jennyai.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.3.7"
+        versionCode = 11
+        versionName = "1.0.0-rc1"
     }
 
     buildFeatures {
