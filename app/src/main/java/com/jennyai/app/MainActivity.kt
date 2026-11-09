@@ -290,104 +290,166 @@ private fun JennyApp(activity: MainActivity) {
     }
 
     MaterialTheme {
-        Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF10121B)) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF10111B)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Brush.verticalGradient(listOf(Color(0xFF191D30), Color(0xFF10121B))))
-                    .padding(20.dp)
-                    .verticalScroll(chatScrollState),
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF20243B), Color(0xFF11131F), Color(0xFF0D0F18))
+                        )
+                    )
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Jenny AI", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                Text("دستیار فارسی • نسخه ۰٫۳٫۷", color = Color(0xFFB8BBD0), fontSize = 14.sp)
-                Text("گفت‌وگوی هوشمند و گفتار فارسی", color = Color(0xFF858BA2), fontSize = 11.sp)
+                // Compact app bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("☰", color = Color(0xFFCFD2E7), fontSize = 25.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Jenny AI", color = Color.White, fontSize = 23.sp, fontWeight = FontWeight.Bold)
+                        Text("دستیار هوشمند فارسی", color = Color(0xFF9FA5C2), fontSize = 11.sp)
+                    }
+                    Text("⋮", color = Color(0xFFCFD2E7), fontSize = 25.sp)
+                }
 
-                Spacer(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                Jenny3DViewer(
+                // Avatar stage: smaller, rounded, and visually separated from chat
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(480.dp)
+                        .height(310.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF29243D)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Jenny3DViewer(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(28.dp))
+                        )
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(12.dp),
+                            color = Color(0xCC20243B),
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF6EE7A8))
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("جنی", color = Color.White, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("جنی", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    status,
+                    color = Color(0xFFB6BAD0),
+                    fontSize = 11.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2
                 )
 
-                Spacer(modifier = Modifier.size(12.dp))
-                Text("جنی", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-                Text(status, color = Color(0xFFB8BBD0), fontSize = 12.sp, textAlign = TextAlign.Center)
-
                 if (!activity.isPersianVoiceReady()) {
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Button(
                         onClick = { activity.installPersianVoice() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF76518E))
-                    ) {
-                        Text("نصب صدای فارسی جنی")
-                    }
-                    Text(
-                        "برای شنیدن پاسخ‌های جنی، صدای فارسی را در موتور گفتار گوشی نصب کن؛ سپس برنامه را دوباره باز کن.",
-                        color = Color(0xFFB8BBD0),
-                        fontSize = 11.sp,
-                        textAlign = TextAlign.Center
-                    )
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7657E8))
+                    ) { Text("نصب صدای فارسی") }
                 }
 
-                Spacer(modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
+                // Conversation panel uses the available screen space instead of a giant message card.
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF222638)),
-                    shape = RoundedCornerShape(18.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = true),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF202437)),
+                    shape = RoundedCornerShape(22.dp)
                 ) {
-                    Text(
-                        text = conversation,
-                        modifier = Modifier.fillMaxWidth().padding(18.dp),
-                        color = Color.White,
-                        textAlign = TextAlign.Right,
-                        fontSize = 16.sp,
-                        lineHeight = 27.sp
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(chatScrollState)
+                            .padding(14.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            "گفت‌وگو",
+                            color = Color(0xFFB8A5FF),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = conversation.replace("\\\\n", "\n"),
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color.White,
+                            textAlign = TextAlign.Right,
+                            fontSize = 14.sp,
+                            lineHeight = 24.sp
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = message,
                     onValueChange = { message = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("پیامت را بنویس یا صحبت کن...", color = Color(0xFF9DA3B8)) },
+                    placeholder = { Text("پیامت را برای جنی بنویس…", color = Color(0xFF9DA3B8)) },
                     singleLine = false,
-                    maxLines = 3,
-                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
-                    shape = RoundedCornerShape(16.dp)
+                    maxLines = 2,
+                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, textAlign = TextAlign.Right),
+                    shape = RoundedCornerShape(18.dp)
                 )
 
-                Spacer(modifier = Modifier.size(10.dp))
-
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
                         onClick = { sendMessage() },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7657E8))
+                        modifier = Modifier.weight(1f).height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7657E8)),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Icon(Icons.Default.Send, contentDescription = "ارسال")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("ارسال")
+                        Spacer(modifier = Modifier.width(7.dp))
+                        Text("ارسال پیام")
                     }
-
                     Button(
                         onClick = {
                             val hasPermission = ContextCompat.checkSelfPermission(
                                 activity, Manifest.permission.RECORD_AUDIO
                             ) == PackageManager.PERMISSION_GRANTED
                             if (hasPermission) {
-                                status = "در حال شنیدن..."
+                                status = "در حال شنیدن…"
                                 activity.startPersianListening(
                                     onResult = { spoken ->
                                         message = spoken
-                                        status = "صدایت به متن تبدیل شد؛ برای دریافت پاسخ ارسال را بزن."
+                                        status = "متن صدایت آماده است؛ ارسال را بزن."
                                     },
                                     onError = { error -> status = error }
                                 )
@@ -395,28 +457,29 @@ private fun JennyApp(activity: MainActivity) {
                                 microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50))
+                        modifier = Modifier.size(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50)),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Icon(Icons.Default.Mic, contentDescription = "میکروفون")
                     }
+                    Button(
+                        onClick = {
+                            activity.stopPersianSpeaking()
+                            status = "پخش صدا متوقف شد."
+                        },
+                        modifier = Modifier.size(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50)),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("■", color = Color.White, fontSize = 18.sp)
+                    }
                 }
-
-                Spacer(modifier = Modifier.size(8.dp))
-                Button(
-                    onClick = {
-                        activity.stopPersianSpeaking()
-                        status = "پخش صدا متوقف شد."
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF343A50))
-                ) {
-                    Text("توقف صدای جنی")
-                }
-                Spacer(modifier = Modifier.size(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "نسخه ۰٫۳٫۷ • گفت‌وگوی آنلاین با پاسخ جایگزین آفلاین محدود",
-                    color = Color(0xFF858BA2),
-                    fontSize = 11.sp,
-                    textAlign = TextAlign.Center
+                    "نسخه آزمایشی • گفت‌وگوی فارسی",
+                    color = Color(0xFF777E9A),
+                    fontSize = 10.sp
                 )
             }
         }
