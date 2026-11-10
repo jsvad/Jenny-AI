@@ -264,7 +264,7 @@ private fun JennyApp(activity: MainActivity) {
                 }
             } catch (error: Exception) {
                 // Keep chat usable when the network or AI service is unavailable.
-                val offlineReply = offlineDemoReply(userMessage)
+                val offlineReply = offlineDemoReply(userMessage, previousConversation)
                 activity.runOnUiThread {
                     conversation = appendConversation(conversation, "تو: $userMessage", "جنی (آفلاین): $offlineReply")
                     chatPreferences.edit().putString("conversation", conversation).apply()
