@@ -205,6 +205,7 @@ private fun JennyApp(activity: MainActivity) {
         )
     }
     var status by remember { mutableStateOf("آماده") }
+    var avatarAnimation by remember { mutableStateOf("idle") }
     val avatarBitmap = remember {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
     }
@@ -272,6 +273,14 @@ private fun JennyApp(activity: MainActivity) {
         }.start()
     }
 
+    fun handleAvatarCommand(spoken: String): Boolean {
+        val action = JennyVoiceCommand.parse(spoken) ?: return false
+        action.animationName?.let { avatarAnimation = it }
+        status = action.feedback
+        activity.speakPersian(action.feedback)
+        return true
+    }
+
     val microphonePermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -279,8 +288,10 @@ private fun JennyApp(activity: MainActivity) {
             status = "در حال شنیدن..."
             activity.startPersianListening(
                 onResult = { spoken ->
-                    message = spoken
-                    sendMessage(spoken)
+                    if (!handleAvatarCommand(spoken)) {
+                        message = spoken
+                        sendMessage(spoken)
+                    }
                 },
                 onError = { error -> status = error }
             )
@@ -329,6 +340,7 @@ private fun JennyApp(activity: MainActivity) {
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         Jenny3DViewer(
+                            animationName = avatarAnimation,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(28.dp))
@@ -448,8 +460,10 @@ private fun JennyApp(activity: MainActivity) {
                                 status = "در حال شنیدن…"
                                 activity.startPersianListening(
                                     onResult = { spoken ->
-                                        message = spoken
-                                        sendMessage(spoken)
+                                        if (!handleAvatarCommand(spoken)) {
+                                            message = spoken
+                                            sendMessage(spoken)
+                                        }
                                     },
                                     onError = { error -> status = error }
                                 )
