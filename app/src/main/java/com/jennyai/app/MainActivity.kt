@@ -348,7 +348,8 @@ private fun JennyApp(activity: MainActivity) {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(28.dp)),
-                            animationName = avatarAnimation
+                            animationName = avatarAnimation,
+                            fallbackBitmap = avatarBitmap
                         )
                         Surface(
                             modifier = Modifier
