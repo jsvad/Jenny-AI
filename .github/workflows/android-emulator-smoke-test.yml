@@ -59,62 +59,7 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -wipe-data
           disable-animations: true
-          script: |
-            set +e
-            mkdir -p emulator-results
-            echo "Waiting for an online emulator..."
-            for attempt in $(seq 1 90); do
-              STATE=$(adb get-state 2>/dev/null)
-              BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-              if [ "$STATE" = "device" ] && [ "$BOOT" = "1" ]; then
-                echo "Emulator is fully booted."
-                break
-              fi
-              sleep 5
-            done
-
-            STATE=$(adb get-state 2>/dev/null)
-            BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-            if [ "$STATE" != "device" ] || [ "$BOOT" != "1" ]; then
-              echo "Emulator did not become ready: state=$STATE boot=$BOOT"
-              adb devices -l > emulator-results/adb-devices.txt 2>&1
-              adb logcat -d -t 12000 > emulator-results/logcat.txt 2>&1
-              exit 1
-            fi
-
-            adb shell settings put system font_scale 1.0
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            INSTALL_RESULT=$?
-            if [ $INSTALL_RESULT -ne 0 ]; then
-              adb logcat -d -t 12000 > emulator-results/logcat.txt 2>&1
-              exit $INSTALL_RESULT
-            fi
-
-            adb shell pm grant com.jennyai.app android.permission.RECORD_AUDIO || true
-            adb shell monkey -p com.jennyai.app 1
-            sleep 25
-
-            adb shell pidof com.jennyai.app > emulator-results/app-pid.txt 2>&1
-            if [ ! -s emulator-results/app-pid.txt ]; then
-              echo "Jenny process is not running after launch."
-              adb logcat -d -t 12000 > emulator-results/logcat.txt 2>&1
-              adb shell dumpsys activity activities > emulator-results/activity.txt 2>&1
-              exit 1
-            fi
-
-            adb shell screencap -p /sdcard/jenny-home.png
-            adb pull /sdcard/jenny-home.png emulator-results/jenny-home.png
-            SCREEN_RESULT=$?
-            adb logcat -d -t 12000 > emulator-results/logcat.txt 2>&1
-            adb shell dumpsys activity activities > emulator-results/activity.txt 2>&1
-            adb devices -l > emulator-results/adb-devices.txt 2>&1
-
-            if [ $SCREEN_RESULT -ne 0 ] || [ ! -s emulator-results/jenny-home.png ]; then
-              echo "Screenshot capture failed."
-              exit 1
-            fi
-            echo "Jenny launched and screenshot captured successfully."
-
+          script: bash .github/scripts/emulator-smoke-test.sh
       - name: Upload emulator screenshot and logs
         if: always()
         uses: actions/upload-artifact@v4
