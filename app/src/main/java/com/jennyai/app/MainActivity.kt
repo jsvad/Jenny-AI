@@ -76,9 +76,6 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tts = TextToSpeech(this, this)
-        if (SpeechRecognizer.isRecognitionAvailable(this)) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-        }
         setContent { JennyApp(this) }
     }
 
@@ -122,11 +119,14 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     fun stopPersianSpeaking() { tts?.stop() }
 
     fun startPersianListening(onResult: (String) -> Unit, onError: (String) -> Unit) {
-        val recognizer = speechRecognizer
-        if (recognizer == null) {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             onError("سرویس تشخیص گفتار روی این گوشی در دسترس نیست.")
             return
         }
+        // Create the recognizer only when the microphone is first used. This
+        // avoids initializing speech services during every cold app launch.
+        val recognizer = speechRecognizer ?: SpeechRecognizer.createSpeechRecognizer(this)
+            .also { speechRecognizer = it }
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
