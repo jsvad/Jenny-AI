@@ -37,6 +37,10 @@ The debug APK is signed with the CI debug key. The workflow caches that key so l
 
 A successful CI build and signature check do not replace a real installation test on the Redmi 14C.
 
+## Voice-driven avatar commands
+
+Jenny recognizes Persian voice commands for walking, running, standing, waving, and jumping. The current bundled model does not contain a sitting animation.
+
 ## Avatar animation status
 
 The GLB contains seven case-sensitive animation clips: `idle`, `walk`, `run`, `walk-cartoon`, `run-cartoon`, `wave`, and `jump`. The viewer uses `autoAnimate = false` and explicitly selects a clip, so it does not play every animation at once. The current scrollable UI exposes all seven clips. The model has 22 skin joints and no morph targets, so these clips animate the body but do not provide facial expressions or lip synchronization.
