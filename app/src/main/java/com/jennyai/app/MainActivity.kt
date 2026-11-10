@@ -205,6 +205,19 @@ private fun JennyApp(activity: MainActivity) {
         )
     }
     var status by remember { mutableStateOf("آماده") }
+    var avatarAnimation by remember { mutableStateOf("idle") }
+
+    fun handleSpokenInput(spoken: String) {
+        val command = parseJennyAnimationCommand(spoken)
+        if (command != null) {
+            avatarAnimation = command.first
+            status = command.second
+            activity.speakPersian(command.second)
+        } else {
+            message = spoken
+            sendMessage(spoken)
+        }
+    }
     val avatarBitmap = remember {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
     }
@@ -278,10 +291,7 @@ private fun JennyApp(activity: MainActivity) {
         if (granted) {
             status = "در حال شنیدن..."
             activity.startPersianListening(
-                onResult = { spoken ->
-                    message = spoken
-                    sendMessage(spoken)
-                },
+                onResult = { spoken -> handleSpokenInput(spoken) },
                 onError = { error -> status = error }
             )
         } else {
@@ -331,7 +341,8 @@ private fun JennyApp(activity: MainActivity) {
                         Jenny3DViewer(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(28.dp))
+                                .clip(RoundedCornerShape(28.dp)),
+                            animationName = avatarAnimation
                         )
                         Surface(
                             modifier = Modifier
@@ -447,10 +458,7 @@ private fun JennyApp(activity: MainActivity) {
                             if (hasPermission) {
                                 status = "در حال شنیدن…"
                                 activity.startPersianListening(
-                                    onResult = { spoken ->
-                                        message = spoken
-                                        sendMessage(spoken)
-                                    },
+                                    onResult = { spoken -> handleSpokenInput(spoken) },
                                     onError = { error -> status = error }
                                 )
                             } else {
@@ -483,6 +491,35 @@ private fun JennyApp(activity: MainActivity) {
                 )
             }
         }
+    }
+}
+
+
+/**
+ * Maps Persian voice commands to clips already included in Jenny_rigged.glb.
+ * Non-command speech continues to the AI chat.
+ */
+private fun parseJennyAnimationCommand(input: String): Pair<String, String>? {
+    val text = input.lowercase(Locale("fa", "IR"))
+        .replace('ي', 'ی')
+        .replace('ك', 'ک')
+        .replace("‌", " ")
+        .replace(Regex("[،,.!?؟]"), " ")
+        .replace(Regex("\\s+"), " ")
+        .trim()
+
+    return when {
+        listOf("بدو", "دَو", "سریع بدو", "شروع به دویدن").any { text.contains(it) } ->
+            "run" to "باشه، جنی می‌دود."
+        listOf("راه برو", "قدم بزن", "شروع به راه رفتن", "حرکت کن").any { text.contains(it) } ->
+            "walk" to "باشه، جنی راه می‌رود."
+        listOf("بپر", "پرش کن", "بپر بالا").any { text.contains(it) } ->
+            "jump" to "باشه، جنی می‌پرد."
+        listOf("دست تکان بده", "سلام کن", "دستت رو تکان بده").any { text.contains(it) } ->
+            "wave" to "سلام! جنی دست تکان می‌دهد."
+        listOf("بایست", "ایست", "توقف کن", "وایسا", "سر جایت بایست").any { text.contains(it) } ->
+            "idle" to "باشه، جنی می‌ایستد."
+        else -> null
     }
 }
 
