@@ -213,7 +213,25 @@ private fun JennyApp(activity: MainActivity) {
     val demoScope = rememberCoroutineScope()
 
     val avatarBitmap = remember {
-        activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
+        // The fallback is displayed inside a small avatar panel, so decoding the
+        // original full-resolution image wastes RAM on phones with limited memory.
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        activity.assets.open("jenny_avatar.jpg").use {
+            BitmapFactory.decodeStream(it, null, options)
+        }
+        var sampleSize = 1
+        while (options.outWidth / sampleSize > 1024 ||
+            options.outHeight / sampleSize > 1024
+        ) {
+            sampleSize *= 2
+        }
+        val decodeOptions = BitmapFactory.Options().apply {
+            inSampleSize = sampleSize
+            inPreferredConfig = android.graphics.Bitmap.Config.RGB_565
+        }
+        activity.assets.open("jenny_avatar.jpg").use {
+            BitmapFactory.decodeStream(it, null, decodeOptions)
+        }?.asImageBitmap()
     }
 
     fun sendMessage(voiceOrTypedMessage: String = message.trim()) {
