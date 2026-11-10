@@ -6,6 +6,9 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Build
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -73,7 +76,10 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tts = TextToSpeech(this, this)
-        if (SpeechRecognizer.isRecognitionAvailable(this)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
+            speechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(this)
+        } else if (SpeechRecognizer.isRecognitionAvailable(this)) {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         }
         setContent { JennyApp(this) }
@@ -129,9 +135,8 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fa-IR")
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "fa-IR")
-            // Prefer the installed speech service's normal mode; Persian offline
-            // recognition is not available on every Android device.
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false)
+            // On-device recognizer is preferred when Android reports it is available.
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "با جنی فارسی صحبت کن")
         }
@@ -214,6 +219,17 @@ private fun JennyApp(activity: MainActivity) {
         if (userMessage.isBlank()) return
         val previousConversation = conversation.takeLast(5000)
         message = ""
+        if (!hasInternet(activity)) {
+            val reply = offlineDemoReply(userMessage, previousConversation)
+            conversation = appendConversation(conversation, "تو: $userMessage", "جنی (آفلاین): $reply")
+            chatPreferences.edit().putString("conversation", conversation).apply()
+            status = if (activity.speakPersian(reply)) {
+                "حالت آفلاین فعال است؛ جنی با قابلیت‌های محلی پاسخ داد."
+            } else {
+                "حالت آفلاین فعال است؛ برای شنیدن پاسخ، صدای فارسی گوشی را نصب کن."
+            }
+            return
+        }
         status = "در حال دریافت پاسخ از هوش مصنوعی جنی..."
         Thread {
             var connection: HttpURLConnection? = null
@@ -238,11 +254,7 @@ private fun JennyApp(activity: MainActivity) {
                 val reply = json.optString("reply").trim()
                 if (reply.isBlank()) throw IllegalStateException("پاسخ خالی از سرور دریافت شد.")
                 activity.runOnUiThread {
-                    conversation = if (conversation.isBlank()) {
-                        "تو: $userMessage\\n\\nجنی: $reply"
-                    } else {
-                        "$conversation\\n\\n────────────\\n\\nتو: $userMessage\\n\\nجنی: $reply"
-                    }
+                    conversation = appendConversation(conversation, "تو: $userMessage", "جنی: $reply")
                     chatPreferences.edit().putString("conversation", conversation).apply()
                     status = if (activity.speakPersian(reply)) {
                         "جنی پاسخ داد و صدا در حال پخش است."
@@ -252,13 +264,9 @@ private fun JennyApp(activity: MainActivity) {
                 }
             } catch (error: Exception) {
                 // Keep chat usable when the network or AI service is unavailable.
-                val offlineReply = offlineDemoReply(userMessage)
+                val offlineReply = offlineDemoReply(userMessage, previousConversation)
                 activity.runOnUiThread {
-                    conversation = if (conversation.isBlank()) {
-                        "تو: $userMessage\\n\\nجنی (آفلاین): $offlineReply"
-                    } else {
-                        "$conversation\\n\\n────────────\\n\\nتو: $userMessage\\n\\nجنی (آفلاین): $offlineReply"
-                    }
+                    conversation = appendConversation(conversation, "تو: $userMessage", "جنی (آفلاین): $offlineReply")
                     chatPreferences.edit().putString("conversation", conversation).apply()
                     status = if (activity.speakPersian(offlineReply)) {
                         "اتصال برقرار نشد؛ جنی با پاسخ ساده آفلاین جواب داد."
@@ -400,7 +408,7 @@ private fun JennyApp(activity: MainActivity) {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = conversation.replace("\\\\n", "\n"),
+                            text = conversation.replace("\\\\n", "\n").replace("\\n", "\n"),
                             modifier = Modifier.fillMaxWidth(),
                             color = Color.White,
                             textAlign = TextAlign.Right,
@@ -486,7 +494,21 @@ private fun JennyApp(activity: MainActivity) {
     }
 }
 
-private fun offlineDemoReply(input: String): String {
+private fun hasInternet(context: Context): Boolean {
+    val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        ?: return false
+    val network = manager.activeNetwork ?: return false
+    val capabilities = manager.getNetworkCapabilities(network) ?: return false
+    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+}
+
+private fun appendConversation(current: String, userLine: String, jennyLine: String): String {
+    val entry = "$userLine\\n\\n$jennyLine"
+    return if (current.isBlank()) entry else "$current\\n\\n────────────\\n\\n$entry"
+}
+
+private fun offlineDemoReply(input: String, history: String = ""): String {
     val text = input.lowercase(Locale("fa", "IR"))
         .replace('ي', 'ی')
         .replace('ك', 'ک')
@@ -511,11 +533,23 @@ private fun offlineDemoReply(input: String): String {
             "حتماً. می‌تونم در حد قابلیت‌های فعلی‌ام راهنمایی‌ات کنم. دقیقاً چه کاری می‌خوای انجام بدی؟"
         text.contains("جوک") || text.contains("لطیفه") ->
             "چرا کامپیوتر سردش شد؟ چون پنجره‌هاش باز بود!"
+        text.contains("حوصله") || text.contains("بازی") ->
+            "بیا یک بازی کلمه‌ای انجام بدیم: من یک کلمه می‌گم و تو با آخرین حرفش یک کلمهٔ تازه بساز. کلمهٔ من: باران."
+        text.contains("داستان") || text.contains("قصه") ->
+            "یک روز یک ربات کوچک تصمیم گرفت به‌جای سریع‌تر جواب دادن، بهتر گوش بدهد. کم‌کم فهمید گفت‌وگوی خوب فقط جواب دادن نیست؛ پرسیدن سؤال درست هم هست. دوست داری ادامه‌اش را بسازیم؟"
+        text.contains("ایده") ->
+            "چند ایده داریم: یک داستان کوتاه تعاملی، بازی حدس کلمه، برنامه‌ریزی یک پروژه، یا تمرین زبان. کدام را شروع کنیم؟"
+        text.contains("جنی") && (text.contains("پروژه") || text.contains("بساز")) ->
+            "می‌تونیم روی پروژهٔ جنی کار کنیم. در حالت آفلاین می‌تونم گفت‌وگوهای ساده و فرمان‌های از پیش تعریف‌شده را انجام بدهم؛ برای پاسخ‌های هوشمندتر باید دوباره به مدل آنلاین وصل بشوم."
+        text.contains("چی کار") || text.contains("چه کار") ->
+            "می‌تونیم گپ بزنیم، بازی کلمه‌ای انجام بدیم، داستان بسازیم یا دربارهٔ ایده‌هات صحبت کنیم. تو انتخاب کن."
         text.contains("فارسی") || text.contains("زبان") ->
             "من برای گفت‌وگوی فارسی طراحی شدم. تشخیص صدا و پخش صدا به پشتیبانی زبان فارسی در سرویس‌های گوشی بستگی داره."
         text.contains("هوش مصنوعی") || text.contains("آنلاین") ->
             "در حال حاضر مغز هوش مصنوعی آنلاین به من متصل نیست و پاسخ‌هایم از چند قانون ساده آفلاین ساخته می‌شوند."
+        text.contains("ادامه") && history.isNotBlank() ->
+            "یادم هست گفت‌وگوی قبلی‌مون روی همین گوشی ذخیره شده. یکم بیشتر بگو منظورت کدوم بخشه تا از همون‌جا ادامه بدیم."
         else ->
-            "پیامت رو دریافت کردم: «$input». هنوز مدل زبانی کامل به من متصل نشده؛ می‌تونم به چند موضوع ساده پاسخ بدم. کمی واضح‌تر بگو تا بهتر راهنمایی‌ات کنم."
+            "پیامت رو دریافت کردم: «$input». الان آفلاینم و نمی‌تونم مثل مدل هوش مصنوعی آنلاین پاسخ آزاد بسازم؛ اما می‌تونیم گپ بزنیم، بازی کنیم یا داستان بسازیم."
     }
 }
