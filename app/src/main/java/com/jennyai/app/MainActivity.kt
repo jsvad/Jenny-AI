@@ -207,17 +207,6 @@ private fun JennyApp(activity: MainActivity) {
     var status by remember { mutableStateOf("آماده") }
     var avatarAnimation by remember { mutableStateOf("idle") }
 
-    fun handleSpokenInput(spoken: String) {
-        val command = parseJennyAnimationCommand(spoken)
-        if (command != null) {
-            avatarAnimation = command.first
-            status = command.second
-            activity.speakPersian(command.second)
-        } else {
-            message = spoken
-            sendMessage(spoken)
-        }
-    }
     val avatarBitmap = remember {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
     }
@@ -283,6 +272,18 @@ private fun JennyApp(activity: MainActivity) {
                 connection?.disconnect()
             }
         }.start()
+    }
+
+    fun handleSpokenInput(spoken: String) {
+        val command = parseJennyAnimationCommand(spoken)
+        if (command != null) {
+            avatarAnimation = command.first
+            status = command.second
+            activity.speakPersian(command.second)
+        } else {
+            message = spoken
+            sendMessage(spoken)
+        }
     }
 
     val microphonePermission = rememberLauncherForActivityResult(
