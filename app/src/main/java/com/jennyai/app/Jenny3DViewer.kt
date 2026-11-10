@@ -57,7 +57,7 @@ fun Jenny3DViewer(modifier: Modifier = Modifier, animationName: String = "idle")
                     animationName = animationName,
                     animationLoop = true,
                     animationSpeed = 0.9f,
-                    scaleToUnits = 2.0f
+                    scaleToUnits = 1.55f
                 )
             }
         }
