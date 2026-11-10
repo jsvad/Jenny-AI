@@ -1,0 +1,41 @@
+name: Jenny AI pull request build
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Generate launcher icons
+        run: |
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          source = Image.open("tools/jenny_icon.jpg").convert("RGB")
+          sizes = {
+              "mipmap-mdpi": 48,
+              "mipmap-hdpi": 72,
+              "mipmap-xhdpi": 96,
+              "mipmap-xxhdpi": 144,
+              "mipmap-xxxhdpi": 192,
+          }
+          for folder, size in sizes.items():
+              target = Path("app/src/main/res") / folder
+              target.mkdir(parents=True, exist_ok=True)
+              source.resize((size, size), Image.Resampling.LANCZOS).save(
+                  target / "ic_launcher.png", format="PNG", optimize=True
+              )
+          PY
+      - name: Assemble debug APK
+        run: gradle :app:assembleDebug --stacktrace
