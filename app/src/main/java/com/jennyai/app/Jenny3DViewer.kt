@@ -23,7 +23,7 @@ import io.github.sceneview.SurfaceType
  * Displays the rigged Jenny character bundled with the application.
  */
 @Composable
-fun Jenny3DViewer(modifier: Modifier = Modifier) {
+fun Jenny3DViewer(modifier: Modifier = Modifier, animationName: String = "idle") {
     var modelReady by remember { mutableStateOf(false) }
 
     Box(
@@ -45,7 +45,7 @@ fun Jenny3DViewer(modifier: Modifier = Modifier) {
                 ModelNode(
                     modelInstance = instance,
                     autoAnimate = false,
-                    animationName = "idle",
+                    animationName = animationName,
                     animationLoop = true,
                     animationSpeed = 1f,
                     scaleToUnits = 2.0f
