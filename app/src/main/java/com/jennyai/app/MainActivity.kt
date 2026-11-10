@@ -49,6 +49,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -206,6 +209,8 @@ private fun JennyApp(activity: MainActivity) {
     }
     var status by remember { mutableStateOf("آماده") }
     var avatarAnimation by remember { mutableStateOf("idle") }
+    var demoRunning by remember { mutableStateOf(false) }
+    val demoScope = rememberCoroutineScope()
 
     val avatarBitmap = remember {
         activity.assets.open("jenny_avatar.jpg").use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
@@ -378,6 +383,31 @@ private fun JennyApp(activity: MainActivity) {
                     textAlign = TextAlign.Center,
                     maxLines = 2
                 )
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Button(
+                    onClick = {
+                        if (!demoRunning) {
+                            demoScope.launch {
+                                demoRunning = true
+                                status = "نمایش جنی در حال اجراست؛ برای ذخیره، ضبط صفحه گوشی را روشن کن."
+                                activity.speakPersian("سلام! من جنی هستم. خوشحالم که می‌بینمت.")
+                                avatarAnimation = "walk"
+                                delay(2800)
+                                avatarAnimation = "wave"
+                                delay(2600)
+                                avatarAnimation = "idle"
+                                demoRunning = false
+                                status = "نمایش جنی تمام شد. می‌توانی دوباره اجرا کنی."
+                            }
+                        }
+                    },
+                    enabled = !demoRunning,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7657E8)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(if (demoRunning) "نمایش در حال اجرا…" else "▶ نمایش جنی: راه رفتن، سلام و صحبت")
+                }
 
                 if (!activity.isPersianVoiceReady()) {
                     Spacer(modifier = Modifier.height(6.dp))
