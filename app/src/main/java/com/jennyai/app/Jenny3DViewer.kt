@@ -19,12 +19,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import io.github.sceneview.Scene
-import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.SurfaceType
+import io.github.sceneview.rememberModelInstance
 
 /**
- * Displays the rigged Jenny character bundled with the application.
- * The smaller target height leaves framing room around the head and feet.
+ * Renders Jenny inside the bundled 3D bedroom environment.
+ *
+ * The room is loaded first so its floor and walls form the scene around Jenny.
+ * Jenny remains a separate rigged model so her animation clips can be driven
+ * independently by voice commands and the chat interface.
  */
 @Composable
 fun Jenny3DViewer(
@@ -33,6 +36,7 @@ fun Jenny3DViewer(
     fallbackBitmap: ImageBitmap? = null
 ) {
     var modelReady by remember { mutableStateOf(false) }
+    var roomReady by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.background(Color(0xFF171827)),
@@ -42,11 +46,30 @@ fun Jenny3DViewer(
             modifier = Modifier.fillMaxSize(),
             surfaceType = SurfaceType.TextureSurface
         ) {
-            // Use the explicitly rigged asset so later pose tracking can drive its bones.
-            val jenny = rememberModelInstance(modelLoader, "models/Jenny_rigged.glb")
+            // The room asset is already bundled in app/src/main/assets/models.
+            // Fit the complete room to a modest real-world scale for a portrait scene.
+            val room = rememberModelInstance(
+                modelLoader,
+                "models/Jenny_room_environment.glb"
+            )
+            val jenny = rememberModelInstance(
+                modelLoader,
+                "models/Jenny_rigged.glb"
+            )
 
             SideEffect {
+                roomReady = room != null
                 modelReady = jenny != null
+            }
+
+            // Draw the room before Jenny so the character is visually placed
+            // within the bedroom rather than on a flat fallback background.
+            room?.let { roomInstance ->
+                ModelNode(
+                    modelInstance = roomInstance,
+                    autoAnimate = false,
+                    scaleToUnits = 4.0f
+                )
             }
 
             jenny?.let { instance ->
@@ -56,8 +79,6 @@ fun Jenny3DViewer(
                     animationName = animationName,
                     animationLoop = true,
                     animationSpeed = 1f,
-                    // 2.0 filled the narrow portrait stage too aggressively.
-                    // A smaller normalized height is a conservative full-body framing fix.
                     scaleToUnits = 1.35f
                 )
             }
@@ -73,7 +94,15 @@ fun Jenny3DViewer(
                 )
             }
             Text(
-                text = "در حال آماده‌سازی مدل سه‌بعدی…",
+                text = "در حال آماده‌سازی مدل سه‌بعدی جنی…",
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        } else if (!roomReady) {
+            Text(
+                text = "در حال بارگذاری اتاق جنی…",
                 color = Color.White,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
