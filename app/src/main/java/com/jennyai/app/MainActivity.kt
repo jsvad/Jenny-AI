@@ -461,7 +461,7 @@ private fun JennyApp(activity: MainActivity) {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = conversation.replace("\\\\n", "\n"),
+                            text = conversation.replace("\n", "\n"),
                             modifier = Modifier.fillMaxWidth(),
                             color = Color.White,
                             textAlign = TextAlign.Right,

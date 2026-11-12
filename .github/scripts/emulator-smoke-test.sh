@@ -56,7 +56,7 @@ if [[ -z "$pid" ]]; then
   exit 1
 fi
 
-adb shell screencap -p /sdcard/jenny-home.png
-adb pull /sdcard/jenny-home.png "$RESULTS_DIR/jenny-home.png"
+# Stream the screenshot to the runner instead of writing to protected /sdcard.
+adb exec-out screencap -p > "$RESULTS_DIR/jenny-home.png"
 test -s "$RESULTS_DIR/jenny-home.png"
 echo "PASS: Jenny launched; process=$pid; screenshot captured."
