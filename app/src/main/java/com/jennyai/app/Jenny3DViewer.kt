@@ -24,6 +24,7 @@ import io.github.sceneview.SurfaceType
 
 /**
  * Displays the rigged Jenny character bundled with the application.
+ * The smaller target height leaves framing room around the head and feet.
  */
 @Composable
 fun Jenny3DViewer(
@@ -55,7 +56,9 @@ fun Jenny3DViewer(
                     animationName = animationName,
                     animationLoop = true,
                     animationSpeed = 1f,
-                    scaleToUnits = 2.0f
+                    // 2.0 filled the narrow portrait stage too aggressively.
+                    // A smaller normalized height is a conservative full-body framing fix.
+                    scaleToUnits = 1.35f
                 )
             }
         }
