@@ -356,7 +356,7 @@ private fun JennyApp(activity: MainActivity) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(310.dp),
+                        .height(340.dp),
                     shape = RoundedCornerShape(28.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF29243D)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
